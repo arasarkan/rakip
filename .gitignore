@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Veri ve model dosyaları depoya girmez; Hub'da durur
+cache/
+data/
+*.onnx
+*.pt
+*.safetensors
+
+node_modules/
+web/dist/
+.vercel/
+.wrangler/
+.env
+.env.*

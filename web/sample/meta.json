@@ -1,0 +1,29 @@
+{
+ "format": 1,
+ "sample": true,
+ "player": "Örnek Oyuncu",
+ "tempo": "blitz",
+ "model": {
+  "file": "model.onnx",
+  "bytes": 0,
+  "sha256": "ornek",
+  "precision": "fp16"
+ },
+ "elo_self": 2080,
+ "elo_oppo_default": 2060,
+ "temperature": 1.0,
+ "book": {
+  "file": "book.json",
+  "max_ply": 30,
+  "min_count": 3
+ },
+ "games": {
+  "fit": 249,
+  "test": 63
+ },
+ "main_score": 69,
+ "score_state": "ok",
+ "confidence": "medium",
+ "confidence_label": "Orta",
+ "last_game": "2024-10-19"
+}

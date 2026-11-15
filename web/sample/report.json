@@ -1,0 +1,579 @@
+{
+ "version": 1,
+ "player": "Örnek Oyuncu",
+ "tempo": "blitz",
+ "tempo_label": "blitz",
+ "summary": {
+  "games": 312,
+  "first_game": "2023-01-05",
+  "last_game": "2024-10-19",
+  "rating_latest": 2050,
+  "rating_peak": 2132,
+  "counts_by_tempo": {
+   "classical": 0,
+   "rapid": 41,
+   "blitz": 312,
+   "bullet": 1250
+  },
+  "sources": {
+   "lichess": 312
+  }
+ },
+ "warnings": [
+  "Blitz tempoda 312 oyun var: sınırlı veri. Model hafif ince ayarla eğitilecek, güven seviyesi orta.",
+  "Bullet tempoda 1250 oyun var. O tempoda eğitilen bot daha güvenilir olur, ama farklı tempoda oyun tarzı değişebilir."
+ ],
+ "results": {
+  "all": {
+   "games": 312,
+   "wins": 145,
+   "draws": 43,
+   "losses": 124,
+   "score": 0.5336538461538461
+  },
+  "white": {
+   "games": 156,
+   "wins": 70,
+   "draws": 27,
+   "losses": 59,
+   "score": 0.5352564102564102
+  },
+  "black": {
+   "games": 156,
+   "wins": 75,
+   "draws": 16,
+   "losses": 65,
+   "score": 0.532051282051282
+  }
+ },
+ "openings": {
+  "white": [
+   {
+    "moves_uci": [
+     "e2e4",
+     "e7e5",
+     "g1f3",
+     "b8c6",
+     "f1b5",
+     "a7a6",
+     "b5a4",
+     "g8f6"
+    ],
+    "moves_san": [
+     "e4",
+     "e5",
+     "Nf3",
+     "Nc6",
+     "Bb5",
+     "a6",
+     "Ba4",
+     "Nf6"
+    ],
+    "name": "Ruy Lopez",
+    "eco": "C78",
+    "games": 56,
+    "share": 0.358974358974359,
+    "score": 0.5714285714285714,
+    "wins": 27,
+    "draws": 10,
+    "losses": 19
+   },
+   {
+    "moves_uci": [
+     "e2e4",
+     "c7c5",
+     "g1f3",
+     "d7d6",
+     "d2d4",
+     "c5d4",
+     "f3d4",
+     "g8f6"
+    ],
+    "moves_san": [
+     "e4",
+     "c5",
+     "Nf3",
+     "d6",
+     "d4",
+     "cxd4",
+     "Nxd4",
+     "Nf6"
+    ],
+    "name": "Sicilya Savunması",
+    "eco": "B50",
+    "games": 36,
+    "share": 0.23076923076923078,
+    "score": 0.5833333333333334,
+    "wins": 18,
+    "draws": 6,
+    "losses": 12
+   },
+   {
+    "moves_uci": [
+     "e2e4",
+     "c7c6",
+     "d2d4",
+     "d7d5",
+     "b1c3",
+     "d5e4",
+     "c3e4",
+     "c8f5"
+    ],
+    "moves_san": [
+     "e4",
+     "c6",
+     "d4",
+     "d5",
+     "Nc3",
+     "dxe4",
+     "Nxe4",
+     "Bf5"
+    ],
+    "name": "Caro-Kann",
+    "eco": "B18",
+    "games": 29,
+    "share": 0.1858974358974359,
+    "score": 0.5517241379310345,
+    "wins": 13,
+    "draws": 6,
+    "losses": 10
+   },
+   {
+    "moves_uci": [
+     "e2e4",
+     "e7e6",
+     "d2d4",
+     "d7d5",
+     "b1c3",
+     "g8f6",
+     "c1g5",
+     "f8e7"
+    ],
+    "moves_san": [
+     "e4",
+     "e6",
+     "d4",
+     "d5",
+     "Nc3",
+     "Nf6",
+     "Bg5",
+     "Be7"
+    ],
+    "name": "Fransız Savunması",
+    "eco": "C11",
+    "games": 21,
+    "share": 0.1346153846153846,
+    "score": 0.4523809523809524,
+    "wins": 8,
+    "draws": 3,
+    "losses": 10
+   },
+   {
+    "moves_uci": [
+     "d2d4",
+     "d7d5",
+     "c2c4",
+     "e7e6",
+     "b1c3",
+     "g8f6",
+     "c1g5",
+     "f8e7"
+    ],
+    "moves_san": [
+     "d4",
+     "d5",
+     "c4",
+     "e6",
+     "Nc3",
+     "Nf6",
+     "Bg5",
+     "Be7"
+    ],
+    "name": "Vezir Gambiti",
+    "eco": "D53",
+    "games": 14,
+    "share": 0.08974358974358974,
+    "score": 0.35714285714285715,
+    "wins": 4,
+    "draws": 2,
+    "losses": 8
+   }
+  ],
+  "black": [
+   {
+    "moves_uci": [
+     "d2d4",
+     "g8f6",
+     "c2c4",
+     "g7g6",
+     "b1c3",
+     "f8g7",
+     "e2e4",
+     "d7d6"
+    ],
+    "moves_san": [
+     "d4",
+     "Nf6",
+     "c4",
+     "g6",
+     "Nc3",
+     "Bg7",
+     "e4",
+     "d6"
+    ],
+    "name": "Şah Hint Savunması",
+    "eco": "E70",
+    "games": 60,
+    "share": 0.38461538461538464,
+    "score": 0.5083333333333333,
+    "wins": 26,
+    "draws": 9,
+    "losses": 25
+   },
+   {
+    "moves_uci": [
+     "e2e4",
+     "c7c5",
+     "g1f3",
+     "b8c6",
+     "d2d4",
+     "c5d4",
+     "f3d4",
+     "g7g6"
+    ],
+    "moves_san": [
+     "e4",
+     "c5",
+     "Nf3",
+     "Nc6",
+     "d4",
+     "cxd4",
+     "Nxd4",
+     "g6"
+    ],
+    "name": "Sicilya: Hızlandırılmış Ejderha",
+    "eco": "B34",
+    "games": 45,
+    "share": 0.28846153846153844,
+    "score": 0.5,
+    "wins": 21,
+    "draws": 3,
+    "losses": 21
+   },
+   {
+    "moves_uci": [
+     "e2e4",
+     "c7c5",
+     "b1c3",
+     "b8c6",
+     "g2g3",
+     "g7g6",
+     "f1g2",
+     "f8g7"
+    ],
+    "moves_san": [
+     "e4",
+     "c5",
+     "Nc3",
+     "Nc6",
+     "g3",
+     "g6",
+     "Bg2",
+     "Bg7"
+    ],
+    "name": "Kapalı Sicilya",
+    "eco": "B25",
+    "games": 26,
+    "share": 0.16666666666666666,
+    "score": 0.6346153846153846,
+    "wins": 15,
+    "draws": 3,
+    "losses": 8
+   },
+   {
+    "moves_uci": [
+     "c2c4",
+     "e7e5",
+     "b1c3",
+     "g8f6",
+     "g2g3",
+     "d7d5",
+     "c4d5",
+     "f6d5"
+    ],
+    "moves_san": [
+     "c4",
+     "e5",
+     "Nc3",
+     "Nf6",
+     "g3",
+     "d5",
+     "cxd5",
+     "Nxd5"
+    ],
+    "name": "İngiliz Açılışı",
+    "eco": "A22",
+    "games": 14,
+    "share": 0.08974358974358974,
+    "score": 0.5714285714285714,
+    "wins": 8,
+    "draws": 0,
+    "losses": 6
+   },
+   {
+    "moves_uci": [
+     "g1f3",
+     "g8f6",
+     "g2g3",
+     "g7g6",
+     "f1g2",
+     "f8g7",
+     "e1g1",
+     "e8g8"
+    ],
+    "moves_san": [
+     "Nf3",
+     "Nf6",
+     "g3",
+     "g6",
+     "Bg2",
+     "Bg7",
+     "O-O",
+     "O-O"
+    ],
+    "name": "Réti",
+    "eco": "A05",
+    "games": 11,
+    "share": 0.07051282051282051,
+    "score": 0.5,
+    "wins": 5,
+    "draws": 1,
+    "losses": 5
+   }
+  ]
+ },
+ "phase_errors": {
+  "available": true,
+  "n": 5191,
+  "phases": {
+   "opening": {
+    "n": 1114,
+    "label": "açılış",
+    "error_rate": 0.3132854578096948,
+    "blunder_rate": 0.2333931777378815,
+    "avg_loss": 10.59232205337104
+   },
+   "middlegame": {
+    "n": 2936,
+    "label": "orta oyun",
+    "error_rate": 0.16791553133514986,
+    "blunder_rate": 0.09536784741144415,
+    "avg_loss": 5.466231319758336
+   },
+   "endgame": {
+    "n": 1141,
+    "label": "oyun sonu",
+    "error_rate": 0.042068361086765996,
+    "blunder_rate": 0.025416301489921123,
+    "avg_loss": 1.4143636660759749
+   }
+  },
+  "worst_phase": "opening",
+  "text": "En çok açılış aşamasında hata yapıyor: her 100 hamleden yaklaşık 31 tanesi ciddi hata."
+ },
+ "time": {
+  "available": true,
+  "games_with_clock": 312,
+  "time_trouble_rate": 0.0,
+  "time_trouble_loss_rate": null,
+  "median_trouble_move": null,
+  "per_move_range": [
+   {
+    "moves": "1-10",
+    "share_of_base_per_move": 0.015464656186504116,
+    "n": 3117
+   },
+   {
+    "moves": "11-20",
+    "share_of_base_per_move": 0.02706125171245223,
+    "n": 3082
+   },
+   {
+    "moves": "21-30",
+    "share_of_base_per_move": 0.02049241562381494,
+    "n": 2930
+   },
+   {
+    "moves": "31-40",
+    "share_of_base_per_move": 0.013657777777777777,
+    "n": 2000
+   },
+   {
+    "moves": "41+",
+    "share_of_base_per_move": 0.01340190816935003,
+    "n": 1118
+   }
+  ],
+  "slowest_range": "11-20",
+  "fastest_range": "41+",
+  "text": "Oyunlarının %0 kadarında zaman sıkıntısına düşüyor. En çok 11-20. hamleler arasında düşünüyor, 41+. hamlelerde hızlanıyor."
+ },
+ "style": {
+  "available": true,
+  "complexity_index": 39,
+  "label": "pozisyonel / sakin",
+  "opposite_castling_rate": 0.0,
+  "early_queen_trade_rate": 0.5801282051282052,
+  "contact_rate": 0.38526521764181315,
+  "avg_game_length": 39.51282051282051,
+  "text": "Tarz göstergesi: pozisyonel / sakin. Oyunlarının %0 kadarında ters taraflara rok var, %58 kadarında vezirler 20. hamleye kadar değişilmiş.",
+  "note": "Bu, oyun yapısından çıkan kaba bir göstergedir; kesin bir sınıflandırma değildir."
+ },
+ "weaknesses": {
+  "available": true,
+  "overall_avg_loss": 5.6756869322401275,
+  "items": [
+   {
+    "type": "Vezirli orta oyunlar",
+    "n": 232,
+    "avg_loss": 11.502010766416788,
+    "error_rate": 0.34913793103448276,
+    "excess": 5.8263238341766606,
+    "examples": [
+     {
+      "fen": "r1b1kb1r/1p3p1p/p5p1/2p1n3/4P3/B5P1/P1Pq1K1P/RNQ1R3 w k - 0 15",
+      "played": "f2g1",
+      "played_san": "Kg1",
+      "best": "b1d2",
+      "best_san": "Nxd2",
+      "loss": 67.7,
+      "move_number": 15,
+      "date": "2024-08-19",
+      "opponent": "Rakip",
+      "site": null
+     },
+     {
+      "fen": "r1bk2r1/2p4p/p1p5/3n1Pp1/6Q1/7P/P1PP1Pq1/2R1KR2 w - - 0 18",
+      "played": "c1a1",
+      "played_san": "Ra1",
+      "best": "g4g2",
+      "best_san": "Qxg2",
+      "loss": 67.7,
+      "move_number": 18,
+      "date": "2024-09-26",
+      "opponent": "Rakip",
+      "site": null
+     },
+     {
+      "fen": "r2qr3/4p2k/pp4p1/7Q/P1P5/2P3P1/2P4P/R1B1K1R1 b - - 0 24",
+      "played": "h7g8",
+      "played_san": "Kg8",
+      "best": "g6h5",
+      "best_san": "gxh5",
+      "loss": 67.7,
+      "move_number": 24,
+      "date": "2024-01-03",
+      "opponent": "Rakip",
+      "site": null
+     }
+    ],
+    "text": "Bu tip pozisyonlarda her 100 hamleden yaklaşık 35 tanesi ciddi hata."
+   },
+   {
+    "type": "Üstün pozisyonu kazanca çevirme",
+    "n": 2434,
+    "avg_loss": 7.065408051745536,
+    "error_rate": 0.2058340180772391,
+    "excess": 1.3897211195054089,
+    "examples": [
+     {
+      "fen": "1rQqkbr1/pp1ppp1p/6p1/5n2/P2NP3/5P2/1P4PP/RNB1KB1R b KQ - 0 11",
+      "played": "f8h6",
+      "played_san": "Bh6",
+      "best": "b8c8",
+      "best_san": "Rxc8",
+      "loss": 67.7,
+      "move_number": 11,
+      "date": "2024-06-19",
+      "opponent": "Rakip",
+      "site": null
+     },
+     {
+      "fen": "2b5/1pp5/r4k2/p3p2P/2P1P3/8/PP3KqP/2R4R w - - 0 27",
+      "played": "f2e3",
+      "played_san": "Ke3",
+      "best": "f2g2",
+      "best_san": "Kxg2",
+      "loss": 67.7,
+      "move_number": 27,
+      "date": "2024-07-04",
+      "opponent": "Rakip",
+      "site": null
+     },
+     {
+      "fen": "r1b1kb1r/1p3p1p/p5p1/2p1n3/4P3/B5P1/P1Pq1K1P/RNQ1R3 w k - 0 15",
+      "played": "f2g1",
+      "played_san": "Kg1",
+      "best": "b1d2",
+      "best_san": "Nxd2",
+      "loss": 67.7,
+      "move_number": 15,
+      "date": "2024-08-19",
+      "opponent": "Rakip",
+      "site": null
+     }
+    ],
+    "text": "Bu tip pozisyonlarda her 100 hamleden yaklaşık 21 tanesi ciddi hata."
+   },
+   {
+    "type": "Dengeli pozisyonlar",
+    "n": 544,
+    "avg_loss": 6.860189467668533,
+    "error_rate": 0.19669117647058823,
+    "excess": 1.1845025354284058,
+    "examples": [
+     {
+      "fen": "5r2/1r3p2/5Ppp/2k2Q2/5P2/2P2K2/7P/2B4R b - - 0 25",
+      "played": "c5c6",
+      "played_san": "Kc6",
+      "best": "g6f5",
+      "best_san": "gxf5",
+      "loss": 54.1,
+      "move_number": 25,
+      "date": "2024-09-02",
+      "opponent": "Rakip",
+      "site": null
+     },
+     {
+      "fen": "1n2k3/1r3pp1/8/4p3/PQ5R/3pP3/b2P1K2/2B3N1 b - - 0 25",
+      "played": "f7f5",
+      "played_san": "f5",
+      "best": "b7b4",
+      "best_san": "Rxb4",
+      "loss": 54.1,
+      "move_number": 25,
+      "date": "2023-02-26",
+      "opponent": "Rakip",
+      "site": null
+     },
+     {
+      "fen": "r2k4/5P2/Npn4r/2p5/P1P5/1P1p4/R3Q3/5BK1 b - - 0 25",
+      "played": "h6e6",
+      "played_san": "Re6",
+      "best": "d3e2",
+      "best_san": "dxe2",
+      "loss": 54.1,
+      "move_number": 25,
+      "date": "2023-11-22",
+      "opponent": "Rakip",
+      "site": null
+     }
+    ],
+    "text": "Bu tip pozisyonlarda her 100 hamleden yaklaşık 20 tanesi ciddi hata."
+   }
+  ]
+ },
+ "data_cleaning": {},
+ "analysed_positions": 5191,
+ "sample": true
+}

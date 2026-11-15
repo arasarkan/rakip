@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Rakip: tarayıcı testleri</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; }
+  .ok { color: #1a7f37; } .fail { color: #c62828; font-weight: 600; }
+  pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Rakip: tarayıcı testleri</h1>
+<p>Tarayıcıdaki kodlamanın Python'daki (rakip/encoding.py) kodlamayla birebir aynı olduğunu doğrular.
+Örnekler <code>python tools/build_web_fixtures.py</code> ile üretilir.</p>
+<pre id="out">çalışıyor...</pre>
+<script type="module">
+import { CONFIG } from "../config.js";
+import * as enc from "../src/encoding.js";
+
+const out = document.getElementById("out");
+const lines = [];
+let failures = 0;
+const check = (name, ok, detail = "") => {
+  if (!ok) failures++;
+  lines.push(`<span class="${ok ? "ok" : "fail"}">${ok ? "GEÇTİ" : "KALDI"}</span>  ${name} ${detail}`);
+};
+
+try {
+  const { Chess } = await import(CONFIG.cdn.chess);
+  const fixtures = await (await fetch("./fixtures.json")).json();
+  check("sözlük boyutu", fixtures.n_moves === enc.N_MOVES, `(${enc.N_MOVES})`);
+
+  let positions = 0, moves = 0, badHistory = 0, badLegal = 0, badKey = 0, badRound = 0;
+  for (const game of fixtures.games) {
+    const chess = game.start_fen ? new Chess(game.start_fen) : new Chess();
+    const cases = new Map(game.cases.map((c) => [c.ply, c]));
+    const codes = [];
+    for (let ply = 0; ply <= game.moves.length; ply++) {
+      const c = cases.get(ply);
+      if (ply < game.moves.length || c) codes.push(enc.boardCodes(chess));
+      if (c) {
+        positions++;
+        const tensor = enc.historyTensor(codes);
+        const nonzero = [];
+        for (let i = 0; i < tensor.length; i++) if (tensor[i]) nonzero.push(i);
+        if (JSON.stringify(nonzero) !== JSON.stringify(c.history_nonzero)) badHistory++;
+        if (enc.positionKey(chess.fen()) !== c.key) badKey++;
+        const legal = chess.moves({ verbose: true });
+        const mine = {};
+        for (const m of legal) {
+          const idx = enc.moveIndex(m, chess.turn());
+          mine[enc.uciOf(m)] = idx;
+          const back = enc.indexMove(idx, chess.turn());
+          if (enc.uciOf(back) !== enc.uciOf(m)) badRound++;
+          moves++;
+        }
+        const a = Object.keys(mine).sort(), b = Object.keys(c.legal).sort();
+        if (JSON.stringify(a) !== JSON.stringify(b) || a.some((u) => mine[u] !== c.legal[u])) badLegal++;
+      }
+      if (ply < game.moves.length) {
+        const u = game.moves[ply];
+        chess.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
+      }
+    }
+  }
+  check("geçmiş tensörü (64x96) Python ile aynı", badHistory === 0, `(${positions} pozisyon, ${badHistory} fark)`);
+  check("yasal hamle indeksleri Python ile aynı", badLegal === 0, `(${moves} hamle, ${badLegal} farklı pozisyon)`);
+  check("indeks -> hamle geri dönüşümü", badRound === 0, `(${badRound} fark)`);
+  check("açılış kitabı anahtarı Python ile aynı", badKey === 0, `(${badKey} fark)`);
+} catch (error) {
+  check("testler çalıştırılamadı", false, String(error && error.stack || error));
+}
+lines.push("");
+lines.push(failures ? `<span class="fail">SONUÇ: ${failures} test kaldı</span>` : `<span class="ok">SONUÇ: tüm testler geçti</span>`);
+out.innerHTML = lines.join("\n");
+document.title = failures ? "KALDI" : "GEÇTİ";
+window.__rakipTests = { failures, lines };
+</script>
+</body>
+</html>

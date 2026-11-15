@@ -1,0 +1,93 @@
+{
+ "method": "temporal",
+ "counts": {
+  "train": 224,
+  "val": 25,
+  "test": 63
+ },
+ "test_fraction": 0.2019,
+ "date_span": {
+  "train": [
+   "2023-01-05",
+   "2024-04-17"
+  ],
+  "val": [
+   "2024-04-19",
+   "2024-06-08"
+  ],
+  "test": [
+   "2024-06-10",
+   "2024-10-19"
+  ]
+ },
+ "digest": {
+  "train": "3f608dbea4ca92b1",
+  "val": "05b2b30bab86de6b",
+  "test": "ea97bbbe8718860d"
+ },
+ "test_game_ids": [
+  "ornek0249",
+  "ornek0250",
+  "ornek0251",
+  "ornek0252",
+  "ornek0253",
+  "ornek0254",
+  "ornek0255",
+  "ornek0256",
+  "ornek0257",
+  "ornek0258",
+  "ornek0259",
+  "ornek0260",
+  "ornek0261",
+  "ornek0262",
+  "ornek0263",
+  "ornek0264",
+  "ornek0265",
+  "ornek0266",
+  "ornek0267",
+  "ornek0268",
+  "ornek0269",
+  "ornek0270",
+  "ornek0271",
+  "ornek0272",
+  "ornek0273",
+  "ornek0274",
+  "ornek0275",
+  "ornek0276",
+  "ornek0277",
+  "ornek0278",
+  "ornek0279",
+  "ornek0280",
+  "ornek0281",
+  "ornek0282",
+  "ornek0283",
+  "ornek0284",
+  "ornek0285",
+  "ornek0286",
+  "ornek0287",
+  "ornek0288",
+  "ornek0289",
+  "ornek0290",
+  "ornek0291",
+  "ornek0292",
+  "ornek0293",
+  "ornek0294",
+  "ornek0295",
+  "ornek0296",
+  "ornek0297",
+  "ornek0298",
+  "ornek0299",
+  "ornek0300",
+  "ornek0301",
+  "ornek0302",
+  "ornek0303",
+  "ornek0304",
+  "ornek0305",
+  "ornek0306",
+  "ornek0307",
+  "ornek0308",
+  "ornek0309",
+  "ornek0310",
+  "ornek0311"
+ ]
+}

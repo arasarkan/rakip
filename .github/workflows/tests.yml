@@ -1,0 +1,31 @@
+name: testler
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  hafif:
+    name: Birim testleri (torch yok)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[test]"
+      - run: pytest -q
+
+  torch:
+    name: PyTorch ve ONNX duman testleri (CPU)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -e ".[train,test]"
+      - run: pytest -q tests/test_torch_smoke.py -rs
+        env:
+          RAKIP_NET_TESTS: "1"

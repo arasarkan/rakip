@@ -1,0 +1,173 @@
+{
+ "version": 1,
+ "player": "Örnek Oyuncu",
+ "tempo": "blitz",
+ "main": {
+  "score": 69,
+  "state": "ok",
+  "sentence": "Bu bot, Örnek Oyuncu adlı oyuncunun hiç görmediği oyunlarında her 10 hamlenin yaklaşık 6'sında onunla aynı hamleyi oynadı.",
+  "generic_score": 67,
+  "verdict": "Bot, genel modelden anlamlı şekilde daha iyi: aynı pozisyonlarda Örnek Oyuncu ile %60 eşleşiyor, genel model %58."
+ },
+ "sub": {
+  "opening": {
+   "score": 52,
+   "text": "Örnek Oyuncu adlı oyuncunun yeni oyunlarındaki açılış hamlelerinin %52 kadarı botun repertuvarında var."
+  },
+  "move": {
+   "score": 60,
+   "text": "Açılıştan sonraki her 10 hamlenin yaklaşık 6'sı birebir aynı.",
+   "ci": [
+    58,
+    62
+   ]
+  },
+  "error": {
+   "score": 86,
+   "available": true,
+   "text": "Örnek Oyuncu hata yaptığında bot da %96 ihtimalle hata yapıyor; hata sıklıkları %77 oranında benziyor."
+  },
+  "confidence": {
+   "level": "medium",
+   "label": "Orta",
+   "bar": 40,
+   "text": "249 blitz oyun ile eğitildi"
+  }
+ },
+ "references": {
+  "bot": 0.6029210406207212,
+  "generic": 0.5750798722044729,
+  "stockfish": 0.24007302601551803,
+  "bot_ci": [
+   0.5831199772662689,
+   0.6220803450784742
+  ],
+  "bot_minus_generic_ci": [
+   0.001856859811009352,
+   0.05548158484528338
+  ],
+  "bot_minus_stockfish_ci": [
+   0.3395441161032962,
+   0.3865029257724215
+  ],
+  "significant_vs_generic": true,
+  "significant_vs_stockfish": true
+ },
+ "formula": {
+  "text": "Ana = 100 x (0.6 x min(1, m/T) + 0.2 x Açılış + 0.2 x Hata)",
+  "m": 0.6029210406207212,
+  "b": 0.5750798722044729,
+  "T": 0.8623899268356421,
+  "ceiling": {
+   "value": 0.8623899268356421,
+   "self_consistency": 0.8623899268356421,
+   "weighted_visits": 711.9999999999995,
+   "source": "rakibin kendi kendisiyle tutarlılığı"
+  },
+  "weights": {
+   "move": 0.6,
+   "opening": 0.2,
+   "error": 0.2
+  },
+  "opening": 0.5257936507936508,
+  "error": 86.86031425174927,
+  "error_detail": {
+   "available": true,
+   "n": 2191,
+   "rate_similarity": 0.7724366373385085,
+   "co_occurrence": 0.964769647696477,
+   "score": 86.86031425174927,
+   "player_error_rate": 0.16841624828845275,
+   "bot_error_rate": 0.21040620721131903,
+   "n_player_errors": 369,
+   "few_errors": false,
+   "per_phase": {
+    "opening": {
+     "n": 462,
+     "player_rate": 0.329004329004329,
+     "bot_rate": 0.38095238095238093
+    },
+    "middlegame": {
+     "n": 1268,
+     "player_rate": 0.15694006309148265,
+     "bot_rate": 0.20425867507886436
+    },
+    "endgame": {
+     "n": 461,
+     "player_rate": 0.039045553145336226,
+     "bot_rate": 0.05639913232104121
+    }
+   },
+   "threshold": 10.0
+  },
+  "error_detail_generic": {
+   "available": true,
+   "n": 2191,
+   "rate_similarity": 0.7583169922178017,
+   "co_occurrence": 0.9512195121951219,
+   "score": 85.47682522064618,
+   "player_error_rate": 0.16841624828845275,
+   "bot_error_rate": 0.21633957097215883,
+   "n_player_errors": 369,
+   "few_errors": false,
+   "per_phase": {
+    "opening": {
+     "n": 462,
+     "player_rate": 0.329004329004329,
+     "bot_rate": 0.40476190476190477
+    },
+    "middlegame": {
+     "n": 1268,
+     "player_rate": 0.15694006309148265,
+     "bot_rate": 0.2058359621451104
+    },
+    "endgame": {
+     "n": 461,
+     "player_rate": 0.039045553145336226,
+     "bot_rate": 0.05639913232104121
+    }
+   },
+   "threshold": 10.0
+  },
+  "raw_main": 69.83562253503725,
+  "raw_main_generic": 67.62190059043837,
+  "error_threshold": 10.0
+ },
+ "counts": {
+  "train_games": 249,
+  "test_games": 63,
+  "test_positions": 2491,
+  "measured_positions": 2191,
+  "excluded": {
+   "in_book": 289,
+   "forced": 11
+  }
+ },
+ "notes": [],
+ "expectation": "İnsanlar aynı pozisyonda bile her zaman aynı hamleyi oynamaz. Bu yüzden hiçbir bot bir oyuncuyla %100 aynı oynayamaz; en iyi kişisel modeller bile 10 hamlenin 6-7'sinden fazlasını tutturamaz.",
+ "sample": true,
+ "quantization": {
+  "chosen": "int8",
+  "bytes": 5600000,
+  "variants": [
+   {
+    "name": "fp32",
+    "bytes": 21000000,
+    "match": 0.6029210406207212,
+    "accepted": true
+   },
+   {
+    "name": "int8",
+    "bytes": 5600000,
+    "match": 0.6009210406207212,
+    "accepted": true
+   },
+   {
+    "name": "fp16",
+    "bytes": 10800000,
+    "match": 0.6029210406207212,
+    "accepted": true
+   }
+  ]
+ }
+}
