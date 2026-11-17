@@ -41,6 +41,11 @@ PGN_YOLLARI = []                  # ör. ["/kaggle/input/oyunlarim"] (.pgn ya da
 OTB_ISIMLER = []                  # ör. ["Carlsen, Magnus"]  ("Soyad, Ad" biçimi)
 FIDE_ID = ""                      # ör. "1503014" (isim karışıklığını önler, önerilir)
 
+# Ek eğitim verisi: diğer tempolardaki oyunlar da (düşük ağırlıkla) eğitime katılır.
+# Benzerlik yine yalnızca TEMPO'daki oyunlarla ölçülür.
+EK_TEMPOLAR = None                # None: komşu tempolar (rapid -> klasik + blitz), []: kapalı
+EK_VERI_AGIRLIGI = 0.5            # ek verinin toplam etkisi, hedef tempo verisinin en çok bu oranı
+
 # Depo ve kod
 HUB_DEPO_OZEL = False             # True: özel depo (site tarayıcıda token ister)
 RAKIP_REPO = "https://github.com/arasarkan/rakip"   # kendi GitHub deponun adresi
@@ -83,7 +88,9 @@ try:
             twic_issues=TWIC_SAYI_ADEDI,
             pgn_paths=list(PGN_YOLLARI),
             max_games=EN_FAZLA_OYUN,
+            extra_tempos=None if EK_TEMPOLAR is None else list(EK_TEMPOLAR),
         ),
+        extra_weight=EK_VERI_AGIRLIGI,
         hub_private=HUB_DEPO_OZEL,
         train=dict(EGITIM),
     )

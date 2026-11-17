@@ -248,3 +248,19 @@ def test_real_maia3_weights_load_and_play_like_a_human():
     assert top == ["e2e4", "d2d4"]
     assert 0.50 < float(probs.max()) < 0.68
     assert MAIA3_5M.dim_vit == 256
+
+
+def test_fit_with_weighted_extra_games(tmp_path):
+    """Ek tempo oyunları düşük ağırlıkla eğitime girer; ağırlık 0 olan örnekler kaybı etkilemez."""
+    torch.manual_seed(4)
+    games = [make_record(i, f"2024-01-{(i % 27) + 1:02d}", plies=30) for i in range(20)]
+    extra_ids = {g.game_id for g in games[:10]}
+    weighted = build_samples(games, game_weight=lambda g: 0.25 if g.game_id in extra_ids else 1.0)
+    val = samples(500, 4)
+    model = RakipModel(SMALL)
+    cfg = TrainConfig(regime="full", max_epochs=2, batch_size=32, patience=5).resolved(1500)
+    result = fit(model, weighted, val, cfg, torch.device("cpu"), 1800, "w", tmp_path, log=lambda *_: None)
+    assert len(result.history) == 3 and all(np.isfinite(h["val_loss"]) for h in result.history)
+    zero = build_samples(games, game_weight=lambda g: 0.0 if g.game_id in extra_ids else 1.0)
+    result2 = fit(RakipModel(SMALL), zero, val, cfg, torch.device("cpu"), 1800, "z", tmp_path / "z", log=lambda *_: None)
+    assert all(np.isfinite(h["val_loss"]) for h in result2.history)

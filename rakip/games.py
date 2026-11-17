@@ -43,6 +43,8 @@ class GameRecord:
     opening: str | None = None
     termination: str | None = None
     site: str | None = None
+    event: str | None = None
+    tempo_source: str | None = None   # time_control | site | event_name
 
     @property
     def sort_key(self) -> tuple[str, str]:
@@ -224,9 +226,13 @@ def record_from_game(
         return drop("too_short")
 
     tc = (headers.get("TimeControl") or "").strip() or None
-    tempo = tempo_hint or classify_time_control(tc)
+    tempo, tempo_source = tempo_hint, "site" if tempo_hint else None
+    if tempo is None:
+        tempo = classify_time_control(tc)
+        tempo_source = "time_control" if tempo else None
     if tempo is None and source in ("twic", "pgn"):
-        tempo = classify_otb_event(headers.get("Event"))
+        tempo = classify_otb_event(headers.get("Event"), headers.get("Site"))
+        tempo_source = "event_name" if tempo else None
     if tempo == "correspondence":
         return drop("correspondence")
     if tempo is None:
@@ -256,6 +262,8 @@ def record_from_game(
         opening=headers.get("Opening") or None,
         termination=headers.get("Termination") or None,
         site=headers.get("Site") or headers.get("Link") or None,
+        event=headers.get("Event") or None,
+        tempo_source=tempo_source,
     )
 
 

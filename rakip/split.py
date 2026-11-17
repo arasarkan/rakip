@@ -138,3 +138,28 @@ def manifest(split: Split) -> dict:
         "digest": {"train": digest(split.train), "val": digest(split.val), "test": digest(split.test)},
         "test_game_ids": sorted(g.game_id for g in split.test),
     }
+
+
+def select_extra_training(extra: Iterable[GameRecord], split: Split) -> tuple[list[GameRecord], dict]:
+    """Diğer tempolardaki oyunlardan eğitime katılabilecek olanları seçer.
+
+    Kural: yalnızca doğrulama döneminden (yoksa test döneminden) ÖNCE oynanmış,
+    tarihi bilinen ve hiçbir doğrulama/test oyunuyla aynı hamleleri içermeyen
+    oyunlar. Böylece ne test seti ne de erken durdurmanın baktığı doğrulama seti
+    gelecekten bilgi sızdırır.
+    """
+    future = split.val or split.test
+    cutoff = min(g.date[:10] for g in future if g.date) if any(g.date for g in future) else None
+    held = {_moves_key(g) for g in split.val + split.test}
+    held_ids = {g.game_id for g in split.train + split.val + split.test}
+    chosen, dropped = [], {"after_cutoff": 0, "undated": 0, "duplicate": 0}
+    for game in extra:
+        if not game.date:
+            dropped["undated"] += 1
+        elif cutoff is not None and game.date[:10] >= cutoff:
+            dropped["after_cutoff"] += 1
+        elif game.game_id in held_ids or _moves_key(game) in held:
+            dropped["duplicate"] += 1
+        else:
+            chosen.append(game)
+    return sorted(chosen, key=lambda g: g.sort_key), {"cutoff": cutoff, "kept": len(chosen), "dropped": dropped}

@@ -33,16 +33,21 @@ def tempo_counts(username: str, fetcher: RateLimitedFetcher, token: str | None =
 
 def fetch_games(
     username: str,
-    tempo: str,
+    tempo: str | list[str],
     fetcher: RateLimitedFetcher,
     max_games: int | None = 20000,
     token: str | None = None,
     stats: Counter | None = None,
     ttl: float | None = 6 * 3600,
 ) -> list[GameRecord]:
-    """Seçilen tempodaki dereceli standart oyunları (en yeniden eskiye) indirir."""
+    """Seçilen tempo(lar)daki dereceli standart oyunları (en yeniden eskiye) indirir.
+
+    Birden fazla tempo verilirse tek istekte indirilir; her oyunun temposu
+    kendi süre ayarından çıkarılır.
+    """
+    tempos = [tempo] if isinstance(tempo, str) else list(dict.fromkeys(tempo))
     params = {
-        "perfType": PERF_TYPES[tempo],
+        "perfType": ",".join(PERF_TYPES[t] for t in tempos),
         "rated": "true",
         "clocks": "true",
         "opening": "true",
@@ -59,4 +64,6 @@ def fetch_games(
     )
     text = path.read_text(encoding="utf-8", errors="replace")
     matcher = PlayerMatcher([username], exact=True)
-    return parse_pgn_text(text, matcher, "lichess", tempo_hint=tempo, stats=stats, prefilter=False)
+    hint = tempos[0] if len(tempos) == 1 else None
+    records = parse_pgn_text(text, matcher, "lichess", tempo_hint=hint, stats=stats, prefilter=False)
+    return [r for r in records if r.tempo in tempos]

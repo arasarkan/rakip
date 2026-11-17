@@ -31,7 +31,7 @@ def test_notebook_cells_are_valid_python_and_parameterised():
     params = {}
     exec(code[0], params)
     for name in ("OYUNCU_ADI", "TEMPO", "LICHESS_KULLANICI", "CHESSCOM_KULLANICI", "TWIC_KULLAN", "PGN_YOLLARI",
-                 "FIDE_ID", "HUB_DEPO_OZEL", "RAKIP_REPO", "BITINCE_KAPAT"):
+                 "FIDE_ID", "HUB_DEPO_OZEL", "RAKIP_REPO", "BITINCE_KAPAT", "EK_TEMPOLAR", "EK_VERI_AGIRLIGI"):
         assert name in params
     assert "env.shutdown()" in code[2] and "finally" in code[2]
 

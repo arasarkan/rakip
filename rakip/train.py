@@ -99,6 +99,7 @@ class DeviceSamples:
         self.target = torch.from_numpy(samples.target.astype(np.int64)).to(device)
         self.legal = torch.from_numpy(samples.legal).to(device)
         self.oppo_elo = torch.from_numpy(samples.oppo_elo).to(device)
+        self.weight = torch.from_numpy(samples.weights()).to(device)
         if self_elo is None:
             self.self_elo = torch.from_numpy(samples.self_elo).to(device)
         else:
@@ -187,7 +188,12 @@ def calibrate_elo(
 
 def run_signature(split_manifest: dict, cfg: TrainConfig, self_elo: float) -> str:
     """Checkpoint'in hangi veri ve ayarla üretildiğinin özeti; uyuşmazsa devam edilmez."""
-    payload = {"digest": split_manifest.get("digest"), "cfg": asdict(cfg), "self_elo": float(self_elo)}
+    payload = {
+        "digest": split_manifest.get("digest"),
+        "extra": split_manifest.get("extra_training"),
+        "cfg": asdict(cfg),
+        "self_elo": float(self_elo),
+    }
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
 
@@ -375,7 +381,9 @@ def fit(
                 group["lr"] = group["base_lr"] * factor
             tokens, se, oe, legal, target = train_data.batch(rows)
             logits, _ = model(tokens, se, oe)
-            loss = F.cross_entropy(masked_logits(logits, legal), target)
+            per_move = F.cross_entropy(masked_logits(logits, legal), target, reduction="none")
+            w = train_data.weight[rows]
+            loss = (per_move * w).sum() / w.sum().clamp_min(1e-6)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)

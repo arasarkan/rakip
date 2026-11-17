@@ -115,6 +115,18 @@ CHESSCOM_KULLANICI = ""
 ```
 
 Masa başı oyunlar için `TWIC_KULLAN = True`, `OTB_ISIMLER = ["Soyad, Ad"]` ve mümkünse `FIDE_ID` ver.
+
+**Ek tempolar.** Varsayılan olarak komşu tempolardaki oyunlar da eğitime katılır (rapid için klasik ve blitz).
+Bunlar yalnızca doğrulama döneminden önce oynanmışsa ve düşük ağırlıkla girer: toplam etkileri hedef tempo
+verisinin en çok `EK_VERI_AGIRLIGI` (varsayılan 0,5) katı kadardır. Benzerlik yine yalnızca seçilen tempodaki
+oyunlarla ölçülür. Kapatmak için `EK_TEMPOLAR = []`.
+
+**Tempo nasıl belirleniyor?** Süre ayarı varsa ondan. TWIC gibi saat bilgisi olmayan arşivlerde etkinlik
+adından: "Blitz", "Armageddon", "Titled Tue" gibi kelimeler blitz; "Rapid" ve bilinen hızlı seriler
+(Champions Chess Tour, Global Chess League ...) rapid; geri kalan masa başı turnuvalar klasik. Çevrim içi
+oynanmış (Site: Chess.com, Lichess ...) ve temposu anlaşılamayan oyunlar tahmin edilmez, atılır. Not defteri
+hangi etkinliği hangi tempoya koyduğunu çıktıda listeler; yanlış görünen bir satır varsa
+`rakip/config.py` içindeki listelere eklenmeli.
 Kendi PGN dosyaların için onları bir Kaggle veri seti olarak yükle, not defterine ekle ve yolunu
 `PGN_YOLLARI` içine yaz.
 
@@ -231,6 +243,10 @@ modeller bile 10 hamlenin 6-7'sinden fazlasını tutturamaz. 100 puan "her hamle
   Büyükusta düzeyinde ve klasik masa başı oyunlarda benzerlik daha düşük çıkabilir. FIDE reytingleri
   Lichess ölçeğine kaba bir kaydırmayla (+200) çevrilir.
 - **Az veri.** 200 oyunun altında yalnızca oyuncu vektörü ve hamle başlığı eğitilir; kişiselleştirme sınırlı kalır.
+- **Çok güçlü oyuncularda kişiselleştirme zor.** İlk gerçek deneme (Magnus Carlsen, rapid, 720 eğitim oyunu)
+  genel modelden farklı bir bot üretemedi: ince ayar doğrulama kaybını iyileştirmedi ve Stockfish, Carlsen'in
+  hamlelerini her iki modelden de iyi tahmin etti (%56'ya karşı %54). Skor bu yüzden "belirsiz" gösterildi.
+  Öğrenme oranları düşürüldü ve ek tempo verisi eklendi; etkisi henüz ölçülmedi.
 - **Masa başı oyunlarda saat yok.** TWIC ve çoğu PGN arşivi saat bilgisi içermez; zaman kullanımı bölümü boş kalır.
 - **İsim eşleştirme.** TWIC isimleri "Soyad,A" biçimindedir ve çakışabilir. `FIDE_ID` vermek güvenlidir.
 - **Repertuvar değişimi.** Rakip test döneminde yeni açılışlara geçtiyse skor düşer; bu gerçeğin kendisidir.

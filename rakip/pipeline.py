@@ -7,6 +7,7 @@ Bu dosya torch gerektirir; yalnızca Kaggle/Colab'da çalışır.
 from __future__ import annotations
 
 import datetime as dt
+from collections import Counter
 import json
 import statistics
 import time
@@ -25,7 +26,7 @@ from .games import save_jsonl
 from .http import RateLimitedFetcher
 from .report import build_report
 from .similarity import compute_scores, error_profile, estimate_ceiling, format_scores_text
-from .split import assert_ids_clean, assert_no_leakage, manifest, temporal_split
+from .split import Split, assert_ids_clean, assert_no_leakage, manifest, select_extra_training, temporal_split
 
 MIN_GAMES = 30
 
@@ -46,6 +47,9 @@ class RunConfig:
     upload: bool = True
     shutdown_when_done: bool = True
     train: dict = field(default_factory=dict)   # TrainConfig alanları (regime, max_epochs, ...)
+    # Ek tempolardaki oyunların eğitimdeki toplam ağırlığı, hedef tempoya göre en çok
+    # bu oran kadar olur (0.5: ek veri toplamda hedef tempo verisinin yarısı kadar etki eder).
+    extra_weight: float = 0.5
 
 
 def _write_json(path: Path, data) -> None:
@@ -117,6 +121,26 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
     test_s = build_samples(split.test, book, cfg.fallback_elo)
     assert_ids_clean(train_s.game_ids + val_s.game_ids, split.test, "eğitim örnekleri")
     assert_no_leakage(split)
+
+    # Ek tempolar: yalnızca doğrulama döneminden önceki oyunlar, düşük ağırlıkla.
+    extra_fit, extra_info = select_extra_training(collected.extra_games, split)
+    extra_info["tempos"] = dict(Counter(g.tempo for g in extra_fit))
+    fit_s = train_s
+    if extra_fit and cfg.extra_weight > 0:
+        per_game = cfg.extra_weight * min(1.0, len(split.train) / len(extra_fit))
+        extra_info["weight_per_game"] = per_game
+        combined = sorted(split.train + extra_fit, key=lambda g: g.sort_key)
+        train_ids = {g.game_id for g in split.train}
+        fit_s = build_samples(combined, book, cfg.fallback_elo,
+                              game_weight=lambda g: 1.0 if g.game_id in train_ids else per_game)
+        assert_ids_clean(fit_s.game_ids, split.test + split.val, "ek tempo eğitim örnekleri")
+        assert_no_leakage(Split(train=combined, val=split.val, test=split.test))
+        log(f"[ek veri] {len(extra_fit)} oyun eğitime katıldı {extra_info['tempos']} "
+            f"(oyun başı ağırlık {per_game:.3f}; {extra_info['cutoff']} ve sonrası hariç: "
+            f"{extra_info['dropped']['after_cutoff']} oyun)")
+    else:
+        extra_info["weight_per_game"] = 0.0
+    split_info["extra_training"] = {k: v for k, v in extra_info.items()}
     excluded = {
         "in_book": int(test_s.in_book.sum()),
         "forced": int(((test_s.n_legal <= 1) & ~test_s.in_book).sum()),
@@ -135,9 +159,9 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
     log(f"[taban] genel model (reyting {self_elo}): test isabeti %{100 * summarize(generic, test_s)['top1']:.1f}")
 
     # 5) İnce ayar -------------------------------------------------------------
-    train_cfg = TrainConfig(**cfg.train).resolved(len(split.fit))
+    train_cfg = TrainConfig(**cfg.train).resolved(len(split.fit) + len(extra_fit))
     signature = run_signature(split_info, train_cfg, self_elo)
-    fit_result = fit(model, train_s, val_s, train_cfg, device, self_elo, signature, paths.work,
+    fit_result = fit(model, fit_s, val_s, train_cfg, device, self_elo, signature, paths.work,
                      store=store, session_start=session_start, log=log)
     bot = predict(model, test_s, device, self_elo=self_elo, use_player=True, temperature=cfg.temperature, seed=2)
     log(f"[bot] ince ayarlı model: test isabeti %{100 * summarize(bot, test_s)['top1']:.1f}")
@@ -187,11 +211,13 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
         "history": fit_result.history, "trainable_parameters": fit_result.trainable_parameters,
         "seconds": fit_result.seconds, "plan": fit_result.plan, "resumed_from_epoch": fit_result.resumed_from_epoch,
     }
+    scores["training"]["extra_games"] = split_info["extra_training"]
     scores["warnings"] = collected.warnings
     report = build_report(
         player=player, tempo=tempo, games=games, details=details,
         counts_by_tempo=collected.counts_by_tempo, warnings=collected.warnings, sources=collected.stats,
     )
+    report["data_cleaning"]["events"] = collected.events
 
     opp = [g.opponent_rating for g in games if g.opponent_rating]
     meta = {
@@ -207,7 +233,7 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
         "elo_oppo_default": int(statistics.median(opp)) if opp else self_elo,
         "temperature": cfg.temperature,
         "book": {"file": "book.json", "max_ply": book.max_ply, "min_count": book.min_count},
-        "games": {"fit": len(split.fit), "test": len(split.test), "min_plies": MIN_PLIES},
+        "games": {"fit": len(split.fit), "test": len(split.test), "extra": len(extra_fit), "min_plies": MIN_PLIES},
         "main_score": scores["main"]["score"],
         "score_state": scores["main"]["state"],
         "confidence": scores["sub"]["confidence"]["level"],

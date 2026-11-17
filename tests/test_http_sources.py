@@ -192,7 +192,7 @@ def make_zip(pgn_text: str) -> bytes:
 def test_twic_scans_issues_and_filters_player(tmp_path):
     def otb(seed, white, black):
         return make_pgn(seed=seed, white=white, black=black, tc=None, clocks=False, utc=False,
-                        extra_headers={"Event": "Tata Steel Masters"})
+                        extra_headers={"Event": "Tata Steel Masters", "Site": "Wijk aan Zee NED"})
 
     issue_1500 = "\n\n".join([otb(1, "Carlsen,M", "Giri,A"), otb(2, "So,W", "Giri,A"), otb(3, "Giri,A", "Carlsen,M")])
     issue_1499 = "\n\n".join([otb(4, "So,W", "Carlsen,M")])
@@ -240,7 +240,7 @@ def test_collect_merges_sources_selects_tempo_and_warns(tmp_path):
     }
     fetcher, _, _ = make_fetcher(tmp_path, routes, min_interval=0)
     cfg = CollectConfig(display_name="Hedef", tempo="blitz", lichess_user="hedef",
-                        otb_names=["hedef"], pgn_paths=[str(folder)])
+                        otb_names=["hedef"], pgn_paths=[str(folder)], extra_tempos=[])
     result = collect(cfg, fetcher, log=lambda *_: None)
     assert len(result.games) == 5
     assert result.stats["all"]["dropped_duplicate"] == 2

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Callable, Iterable
 
 import chess
 import numpy as np
@@ -49,6 +49,7 @@ class SampleSet:
     in_book: np.ndarray     # (N,) bool, pozisyon açılış kitabında mı
     clock: np.ndarray       # (N,) float32, hamleden önce kalan saniye (bilinmiyorsa nan)
     game_ids: list[str]
+    weight: np.ndarray | None = None  # (N,) float32 eğitim ağırlığı; None = hepsi 1
 
     def __len__(self) -> int:
         return int(self.target.shape[0])
@@ -66,7 +67,11 @@ class SampleSet:
             n_legal=self.n_legal[rows], self_elo=self.self_elo[rows], oppo_elo=self.oppo_elo[rows],
             game_index=self.game_index[rows], ply=self.ply[rows], in_book=self.in_book[rows],
             clock=self.clock[rows], game_ids=self.game_ids,
+            weight=None if self.weight is None else self.weight[rows],
         )
+
+    def weights(self) -> np.ndarray:
+        return np.ones(len(self), dtype=np.float32) if self.weight is None else self.weight
 
     @property
     def measured(self) -> np.ndarray:
@@ -88,9 +93,13 @@ def build_samples(
     games: Iterable[GameRecord],
     book: OpeningBook | None = None,
     fallback_elo: int = DEFAULT_ELO,
+    game_weight: Callable[[GameRecord], float] | None = None,
 ) -> SampleSet:
+    """`game_weight` verilirse her oyunun pozisyonları o ağırlıkla eğitime girer
+    (ör. ek tempolardaki oyunlar daha düşük ağırlıkla)."""
     games = list(games)
     player_elo = nominal_elo(games, fallback_elo)
+    weights: list[float] = []
 
     codes: list[np.ndarray] = []
     hist, target, legal, n_legal = [], [], [], []
@@ -122,6 +131,7 @@ def build_samples(
                 # Hamleden önce kalan süre = oyuncunun bir önceki hamlesinden sonra kalan süre.
                 before = game.clocks[ply - 2] if game.clocks and ply >= 2 else None
                 clock.append(np.nan if before is None else before)
+                weights.append(1.0 if game_weight is None else float(game_weight(game)))
             board.push(move)
 
     n = len(target)
@@ -138,4 +148,5 @@ def build_samples(
         in_book=np.asarray(in_book, dtype=bool),
         clock=np.asarray(clock, dtype=np.float32),
         game_ids=[g.game_id for g in games],
+        weight=None if game_weight is None else np.asarray(weights, dtype=np.float32),
     )

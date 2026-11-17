@@ -82,18 +82,33 @@ _RAPID_SERIES = (
     "ftx crypto cup", "crypto cup", "oslo esports", "generation cup", "new in chess classic",
     "skilling open", "opera euro", "goldmoney asian", "lindores abbey", "chess.com classic",
     "charity cup", "american cup", "tata steel india", "superbet poland", "superunited",
-    "croatia grand chess tour", "speed chess", "esports world cup",
+    "croatia grand chess tour", "esports world cup",
 )
-_BLITZ_WORDS = ("blitz", "bullet", "armageddon", "titled tuesday", "bundesliga blitz")
+# Blitz ve bullet etkinlikleri. TWIC haftalık Titled Tuesday turnuvalarını
+# "Titled Tue 2nd Jan Early" gibi kısaltarak yazar; bu yüzden "titled tue" aranır.
+_BLITZ_WORDS = (
+    "blitz", "bullet", "armageddon", "titled tue", "titled arena", "speed chess",
+    "bullet brawl", "lichess titled", "hourly",
+)
+# Bu "Site" değerleri oyunun çevrim içi oynandığını gösterir.
+_ONLINE_SITES = ("chess.com", "lichess", "chess24", "internet", "online", "playchess", "icc")
 
 
-def classify_otb_event(event: str | None) -> str:
-    """Masa başı (OTB) oyunlarda saat bilgisi yoktur; tempo etkinlik adından çıkar.
+def is_online_site(site: str | None) -> bool:
+    text = (site or "").casefold()
+    return any(word in text for word in _ONLINE_SITES)
 
-    Önce açık kelimelere (blitz, armageddon, rapid) bakılır, sonra adında tempo
-    geçmeyen bilinen hızlı satranç serilerine. Hiçbiri yoksa klasik sayılır.
-    Not: "Superbet Poland" ve "Tata Steel India" gibi karma etkinliklerde TWIC
-    rapid ve blitz bölümlerini genellikle ayrı adlarla ("... Rapid", "... Blitz")
+
+def classify_otb_event(event: str | None, site: str | None = None) -> str | None:
+    """Saat bilgisi olmayan oyunlarda tempoyu etkinlik adından çıkarır.
+
+    Sıra: açık kelimeler (blitz, armageddon, titled tue ...; sonra rapid), sonra
+    adında tempo geçmeyen bilinen hızlı seriler. Hiçbiri yoksa:
+    - masa başı oyun -> klasik (masa başı turnuvaların çoğu klasiktir),
+    - çevrim içi oyun (Site: Chess.com, Lichess ...) -> None, yani "bilinmiyor".
+      Çevrim içi klasik oyun nadirdir; tahmin etmek yerine oyun atılır ve
+      atılan sayısı raporda görünür.
+    Karma etkinliklerde TWIC rapid ve blitz bölümlerini genellikle ayrı adlarla
     yazar; açık kelime her zaman seri adından önce gelir.
     """
     text = " ".join((event or "").casefold().split())
@@ -103,4 +118,15 @@ def classify_otb_event(event: str | None) -> str:
         return "rapid"
     if any(name in text for name in _RAPID_SERIES):
         return "rapid"
+    if is_online_site(site):
+        return None
     return "classical"
+
+
+# Ek eğitim verisi için varsayılan komşu tempolar (bullet, blitz'e yalnızca blitz hedefinde eklenir).
+NEIGHBOUR_TEMPOS = {
+    "classical": ["rapid"],
+    "rapid": ["classical", "blitz"],
+    "blitz": ["rapid", "bullet"],
+    "bullet": ["blitz"],
+}

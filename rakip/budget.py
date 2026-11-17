@@ -25,10 +25,12 @@ def choose_regime(n_games: int) -> str:
 
 
 # rejim -> (en çok epoch, gövde öğrenme oranı, oyuncu vektörü öğrenme oranı)
+# İlk gerçek çalıştırmada (Carlsen, rapid, light, 5e-5) doğrulama kaybı ilk
+# epoch'tan itibaren yükseldi; oranlar bu yüzden düşürüldü.
 REGIME_DEFAULTS = {
-    "embedding": (15, 1e-4, 1e-3),
-    "light": (10, 5e-5, 1e-3),
-    "full": (6, 2e-5, 5e-4),
+    "embedding": (15, 5e-5, 5e-4),
+    "light": (10, 1.5e-5, 3e-4),
+    "full": (6, 8e-6, 2e-4),
 }
 
 
