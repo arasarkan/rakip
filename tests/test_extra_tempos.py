@@ -99,11 +99,15 @@ def test_extra_games_only_from_before_validation_period(rapid_split):
 def test_extra_copy_of_a_test_game_is_rejected(rapid_split):
     clone = copy.deepcopy(rapid_split.test[0])
     clone.game_id, clone.tempo, clone.date = "kopya", "classical", "2023-01-02"
+    # Ek veride seçim temkinlidir: hamleleri bir doğrulama/test oyunuyla aynı olan
+    # oyun, tarihi uzak olsa bile alınmaz.
     chosen, info = select_extra_training([clone], rapid_split)
     assert chosen == [] and info["dropped"]["duplicate"] == 1
-    # Kontrol olmadan eklenseydi sızıntı denetimi yakalardı.
+    # Tarihi yakın bir kopya kontrol olmadan eklenseydi sızıntı denetimi yakalardı.
+    near = copy.deepcopy(clone)
+    near.date = rapid_split.val[-1].date
     with pytest.raises(LeakageError):
-        assert_no_leakage(Split(train=rapid_split.train + [clone], val=rapid_split.val, test=rapid_split.test))
+        assert_no_leakage(Split(train=rapid_split.train + [near], val=[], test=rapid_split.test))
 
 
 def test_sample_weights_follow_game_weight():

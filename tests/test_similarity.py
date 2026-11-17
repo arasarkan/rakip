@@ -247,3 +247,14 @@ def repertoire_like():
     from test_encoding_book import game_from_san
 
     return [game_from_san(i, ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6"], filler_seed=i % 3) for i in range(40)]
+
+
+def test_ceiling_ignores_book_positions(repertoire_like):
+    """Kitaptaki ezber hatlar tavanı şişirmemeli."""
+    from rakip.book import build_book
+
+    without_book = sim.estimate_ceiling(repertoire_like, min_total=10)
+    book = build_book(repertoire_like)
+    with_book = sim.estimate_ceiling(repertoire_like, min_total=10, book=book)
+    assert without_book["weighted_visits"] > with_book["weighted_visits"]
+    assert with_book["value"] >= 0.75

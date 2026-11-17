@@ -13,7 +13,7 @@ import math
 from dataclasses import dataclass
 from typing import Iterable
 
-from .games import GameRecord
+from .games import GameRecord, likely_copy
 
 MIN_TEST_FRACTION = 0.15
 MAX_TEST_FRACTION = 0.20
@@ -95,10 +95,19 @@ def assert_no_leakage(split: Split) -> None:
         if common:
             raise LeakageError(f"{name} arasında ortak {len(common)} oyun var, ör. {sorted(common)[:3]}")
 
-    test_moves = {_moves_key(g) for g in split.test}
+    # Aynı hamleler + yakın tarih = aynı oyunun başka kaynaktan gelmiş kopyası.
+    # Aylar arayla oynanmış, hamleleri aynı iki ayrı oyun (ör. tekrarlanan bir
+    # tuzak hattı) sızıntı değildir; bkz. games.likely_copy.
+    test_by_moves: dict[str, list[GameRecord]] = {}
+    for g in split.test:
+        test_by_moves.setdefault(_moves_key(g), []).append(g)
     for game in split.fit:
-        if _moves_key(game) in test_moves:
-            raise LeakageError(f"{game.game_id} oyunu bir test oyunuyla hamle hamle aynı")
+        for other in test_by_moves.get(_moves_key(game), ()):
+            if likely_copy(game, other):
+                raise LeakageError(
+                    f"{game.game_id} ({game.date}) oyunu {other.game_id} ({other.date}) test oyunuyla "
+                    f"hamle hamle aynı ve tarihleri yakın: aynı oyunun kopyası"
+                )
 
     if split.test:
         if any(not g.date for g in split.test):

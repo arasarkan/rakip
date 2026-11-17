@@ -3,10 +3,10 @@
  "player": "Örnek Oyuncu",
  "tempo": "blitz",
  "main": {
-  "score": 69,
+  "score": 76,
   "state": "ok",
   "sentence": "Bu bot, Örnek Oyuncu adlı oyuncunun hiç görmediği oyunlarında her 10 hamlenin yaklaşık 6'sında onunla aynı hamleyi oynadı.",
-  "generic_score": 67,
+  "generic_score": 73,
   "verdict": "Bot, genel modelden anlamlı şekilde daha iyi: aynı pozisyonlarda Örnek Oyuncu ile %60 eşleşiyor, genel model %58."
  },
  "sub": {
@@ -57,12 +57,12 @@
   "text": "Ana = 100 x (0.6 x min(1, m/T) + 0.2 x Açılış + 0.2 x Hata)",
   "m": 0.6029210406207212,
   "b": 0.5750798722044729,
-  "T": 0.8623899268356421,
+  "T": 0.75,
   "ceiling": {
-   "value": 0.8623899268356421,
-   "self_consistency": 0.8623899268356421,
-   "weighted_visits": 711.9999999999995,
-   "source": "rakibin kendi kendisiyle tutarlılığı"
+   "value": 0.75,
+   "self_consistency": null,
+   "weighted_visits": 0.0,
+   "source": "varsayım (0.75)"
   },
   "weights": {
    "move": 0.6,
@@ -129,8 +129,8 @@
    },
    "threshold": 10.0
   },
-  "raw_main": 69.83562253503725,
-  "raw_main_generic": 67.62190059043837,
+  "raw_main": 76.12161911588056,
+  "raw_main_generic": 73.61762783636007,
   "error_threshold": 10.0
  },
  "counts": {

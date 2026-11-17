@@ -208,7 +208,7 @@ Ana skor = 100 x ( 0,6 x min(1, m / T)  +  0,2 x Açılış  +  0,2 x Hata )
 ```
 
 - `m`: botun rakiple aynı hamleyi oynama oranı.
-- `T`: ulaşılabilir tavan. En az 0,75; rakibin tekrar eden pozisyonlardaki kendi kendisiyle tutarlılığı
+- `T`: ulaşılabilir tavan. En az 0,75; rakibin açılış kitabı dışında tekrar eden pozisyonlardaki kendi kendisiyle tutarlılığı
   daha yüksekse o kullanılır. 0,75 bir varsayımdır; veri onu yalnızca yükseltebilir, yani skoru yalnızca
   sıkılaştırabilir.
 - `Açılış`: rakibin yeni oyunlarının ilk 8 hamlesindeki seçimlerinin ne kadarı botun kitabında var.

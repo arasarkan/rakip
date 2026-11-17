@@ -137,7 +137,7 @@ def main():
     scores = compute_scores(
         player=PLAYER, tempo=TEMPO, n_games=len(split.fit), target=test_s.target, measured=test_s.measured,
         groups=test_s.game_index, bot=bot, generic=generic, opening=opening_coverage(book, split.test),
-        ceiling=estimate_ceiling(split.fit), stockfish_best=test_pass.sf_best, error_bot=err_bot, error_generic=err_gen,
+        ceiling=estimate_ceiling(split.fit, book=book), stockfish_best=test_pass.sf_best, error_bot=err_bot, error_generic=err_gen,
         n_test_games=len(split.test),
         excluded={"in_book": int(test_s.in_book.sum()), "forced": int(((test_s.n_legal <= 1) & ~test_s.in_book).sum())},
     )

@@ -196,7 +196,7 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
     deployed.sample = bot.sample
 
     # 8) Skorlar ve rapor ------------------------------------------------------
-    ceiling = estimate_ceiling(split.fit)
+    ceiling = estimate_ceiling(split.fit, book=book)
     scores = compute_scores(
         player=player, tempo=tempo, n_games=len(split.fit),
         target=test_s.target, measured=test_s.measured, groups=test_s.game_index,

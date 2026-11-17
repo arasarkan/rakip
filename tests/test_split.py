@@ -67,13 +67,43 @@ def test_leak_same_id_is_detected(dated_records):
 
 def test_leak_same_moves_different_id_is_detected(dated_records):
     """Aynı oyunun başka kaynaktan gelen kopyası (farklı kimlik) da sızıntıdır."""
+    import datetime as dt
+
     split = temporal_split(dated_records)
-    clone = copy.deepcopy(split.test[3])
+    clone = copy.deepcopy(split.test[0])
     clone.game_id = "baska-kimlik"
-    clone.date = split.train[0].date
+    # Başka kaynak tarihi bir gün önce yazmış (saat dilimi farkı).
+    clone.date = (dt.date.fromisoformat(split.test[0].date[:10]) - dt.timedelta(days=1)).isoformat()
     split.train.append(clone)
-    with pytest.raises(LeakageError):
+    with pytest.raises(LeakageError, match="kopyası"):
         assert_no_leakage(split)
+
+
+def test_same_moves_months_apart_are_distinct_games_not_leakage(dated_records):
+    """Gerçek veride görülen durum: oyuncu aynı tuzak hattını aylar arayla tekrar oynamış.
+
+    İlk Eric Rosen çalıştırması bu yüzden LeakageError ile durmuştu.
+    """
+    from rakip.games import dedupe
+
+    games = copy.deepcopy(dated_records)
+    games[95].moves = list(games[5].moves)          # 90 gün arayla birebir aynı oyun
+    assert len(dedupe(games)) == len(games)         # ikisi de korunur
+    split = temporal_split(games)
+    assert games[95].game_id in {g.game_id for g in split.test}
+    assert games[5].game_id in {g.game_id for g in split.train}
+    assert_no_leakage(split)                        # hata vermemeli
+
+
+def test_dedupe_treats_near_dated_identical_games_as_copies(dated_records):
+    from rakip.games import dedupe
+
+    a = copy.deepcopy(dated_records[10])
+    b = copy.deepcopy(a)
+    b.game_id, b.source, b.date = "baska", "pgn", dated_records[11].date   # ertesi gün
+    c = copy.deepcopy(a)
+    c.game_id, c.date = "tarihsiz", None
+    assert [g.game_id for g in dedupe([a, b, c])] == [a.game_id]
 
 
 def test_leak_future_game_in_train_is_detected(dated_records):

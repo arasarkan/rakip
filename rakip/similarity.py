@@ -139,20 +139,26 @@ def cluster_bootstrap(
     return float(lo), float(hi)
 
 
-def estimate_ceiling(fit_games: Iterable[GameRecord], min_visits: int = 5, min_total: int = 300) -> dict:
+def estimate_ceiling(
+    fit_games: Iterable[GameRecord], min_visits: int = 5, min_total: int = 300, book=None
+) -> dict:
     """Rakibin kendi kendisiyle tutarlılığı: aynı pozisyona tekrar geldiğinde,
     diğer gelişlerinde en sık oynadığı hamleyi yine oynama oranı.
 
-    Tekrar eden pozisyonlar çoğunlukla açılıştadır, bu yüzden bu yalnızca kaba
-    bir göstergedir. Tavan olarak max(0.75, bu değer) kullanılır: veri tavanı
-    yalnızca yükseltebilir.
+    `book` verilirse açılış kitabındaki pozisyonlar sayılmaz. Hamle uyumu kitap
+    dışında ölçüldüğü için tavan da kitap dışında tahmin edilmeli: kitaptaki
+    ezber hatlarda tutarlılık çok yüksektir (ilk gerçek veri denemesinde 0.91)
+    ve kitap dışındaki zorluğu temsil etmez. Kitap dışında yeterince tekrar eden
+    pozisyon yoksa varsayılan 0.75 kullanılır.
+
+    Tavan olarak max(0.75, bu değer) kullanılır: veri tavanı yalnızca yükseltebilir.
     """
     counts: dict[str, Counter] = defaultdict(Counter)
     for game in fit_games:
         board = chess.Board()
         player_turn = chess.WHITE if game.player_color == "white" else chess.BLACK
-        for uci in game.moves[:60]:
-            if board.turn == player_turn:
+        for ply, uci in enumerate(game.moves[:60]):
+            if board.turn == player_turn and (book is None or book.lookup(board, ply) is None):
                 counts[position_key(board)][uci] += 1
             board.push(chess.Move.from_uci(uci))
     hits = visits = 0.0

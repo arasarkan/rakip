@@ -7,6 +7,7 @@ tutulur: `player_color`, `player_rating`, `result` hep hedef oyuncuya aittir.
 
 from __future__ import annotations
 
+import datetime as _dt
 import hashlib
 import io
 import json
@@ -313,19 +314,47 @@ def parse_pgn_text(
     return records
 
 
+# Aynı hamleleri içeren iki kayıt bu kadar gün içindeyse aynı oyunun kopyası sayılır
+# (iki kaynak tarihi saat dilimi yüzünden bir gün farklı yazabilir).
+COPY_WINDOW_DAYS = 1
+
+
+def _day(date: str | None) -> int | None:
+    if not date:
+        return None
+    try:
+        return _dt.date.fromisoformat(date[:10]).toordinal()
+    except ValueError:
+        return None
+
+
+def likely_copy(a: GameRecord, b: GameRecord) -> bool:
+    """İki kayıt aynı oyunun kopyası mı?
+
+    Hamleleri aynı olan iki kayıt, tarihleri birbirine yakınsa (ya da biri
+    tarihsizse) aynı oyundur. Tarihleri uzaksa iki ayrı oyundur: oyuncular
+    bilinen tuzak hatlarını ya da kısa beraberlikleri hamle hamle tekrar edebilir
+    (ör. Stafford Gambiti'ndeki hızlı mat). Bunlar gerçek, ayrı oyunlardır.
+    """
+    if a.moves != b.moves:
+        return False
+    da, db = _day(a.date), _day(b.date)
+    return da is None or db is None or abs(da - db) <= COPY_WINDOW_DAYS
+
+
 def dedupe(records: Iterable[GameRecord], stats: Counter | None = None) -> list[GameRecord]:
-    """Aynı oyunun kopyalarını eler (aynı kimlik ya da aynı gün + aynı hamleler)."""
+    """Aynı oyunun kopyalarını eler: aynı kimlik ya da `likely_copy`."""
     stats = stats if stats is not None else Counter()
     seen_ids: set[str] = set()
-    seen_moves: set[tuple[str, str]] = set()
+    by_moves: dict[str, list[GameRecord]] = {}
     out: list[GameRecord] = []
     for record in records:
-        move_key = ((record.date or "")[:10], " ".join(record.moves))
-        if record.game_id in seen_ids or move_key in seen_moves:
+        key = " ".join(record.moves)
+        if record.game_id in seen_ids or any(likely_copy(record, other) for other in by_moves.get(key, ())):
             stats["dropped_duplicate"] += 1
             continue
         seen_ids.add(record.game_id)
-        seen_moves.add(move_key)
+        by_moves.setdefault(key, []).append(record)
         out.append(record)
     return out
 
