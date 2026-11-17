@@ -74,11 +74,33 @@ def classify_time_control(tc: str | None) -> str | None:
     return "classical"
 
 
+# Adında "rapid" geçmeyen ama hızlı tempoda oynanan bilinen etkinlik serileri.
+# TWIC bu etkinliklerde saat bilgisi vermez; adına bakılmazsa klasik sanılırlar.
+_RAPID_SERIES = (
+    "global chess league", "champions chess tour", "chessable masters", "meltwater",
+    "magnus carlsen invitational", "carlsen invitational", "airthings masters", "aimchess",
+    "ftx crypto cup", "crypto cup", "oslo esports", "generation cup", "new in chess classic",
+    "skilling open", "opera euro", "goldmoney asian", "lindores abbey", "chess.com classic",
+    "charity cup", "american cup", "tata steel india", "superbet poland", "superunited",
+    "croatia grand chess tour", "speed chess", "esports world cup",
+)
+_BLITZ_WORDS = ("blitz", "bullet", "armageddon", "titled tuesday", "bundesliga blitz")
+
+
 def classify_otb_event(event: str | None) -> str:
-    """Masa başı (OTB) oyunlarda saat bilgisi yoktur; tempo etkinlik adından çıkar."""
-    text = (event or "").casefold()
-    if "blitz" in text or "bullet" in text:
+    """Masa başı (OTB) oyunlarda saat bilgisi yoktur; tempo etkinlik adından çıkar.
+
+    Önce açık kelimelere (blitz, armageddon, rapid) bakılır, sonra adında tempo
+    geçmeyen bilinen hızlı satranç serilerine. Hiçbiri yoksa klasik sayılır.
+    Not: "Superbet Poland" ve "Tata Steel India" gibi karma etkinliklerde TWIC
+    rapid ve blitz bölümlerini genellikle ayrı adlarla ("... Rapid", "... Blitz")
+    yazar; açık kelime her zaman seri adından önce gelir.
+    """
+    text = " ".join((event or "").casefold().split())
+    if any(word in text for word in _BLITZ_WORDS):
         return "blitz"
     if "rapid" in text or "rapide" in text or "schnell" in text:
+        return "rapid"
+    if any(name in text for name in _RAPID_SERIES):
         return "rapid"
     return "classical"

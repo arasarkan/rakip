@@ -130,3 +130,14 @@ def test_jsonl_roundtrip(tmp_path):
     loaded = load_jsonl(tmp_path / "g.jsonl")
     assert loaded == [r]
     assert isinstance(loaded[0], GameRecord)
+
+
+def test_otb_series_without_tempo_word_are_rapid_and_armageddon_is_blitz():
+    assert classify_otb_event("Global Chess League 2024") == "rapid"
+    assert classify_otb_event("Champions Chess Tour Finals 2024") == "rapid"
+    assert classify_otb_event("Meltwater Champions Chess Tour  Airthings") == "rapid"
+    assert classify_otb_event("Norway Chess Armageddon 2024") == "blitz"
+    assert classify_otb_event("Superbet Rapid 2025") == "rapid"
+    assert classify_otb_event("Superbet Blitz 2025") == "blitz"
+    assert classify_otb_event("Norway Chess 2025") == "classical"
+    assert classify_otb_event(None) == "classical"

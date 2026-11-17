@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .config import FULL_FINETUNE_GAMES, LOW_DATA_GAMES, TEMPO_LABELS_TR, TEMPOS
 from .games import GameRecord, PlayerMatcher, dedupe
-from .http import RateLimitedFetcher
+from .http import NotFound, RateLimitedFetcher
 
 
 @dataclass
@@ -102,7 +102,12 @@ def collect(
     if cfg.chesscom_user:
         stats["chesscom"] = Counter()
         log(f"[veri] Chess.com: {cfg.chesscom_user} arşivleri indiriliyor...")
-        all_records.extend(chesscom.fetch_games(cfg.chesscom_user, fetcher, stats=stats["chesscom"]))
+        try:
+            all_records.extend(chesscom.fetch_games(cfg.chesscom_user, fetcher, stats=stats["chesscom"]))
+        except NotFound:
+            # Bazı hesapların (ör. kapalı ya da gizli arşivler) oyun arşivi API'de yoktur.
+            stats["chesscom"]["archives_unavailable"] = 1
+            log(f"[UYARI] Chess.com: {cfg.chesscom_user} için oyun arşivi API'de bulunamadı; bu kaynak atlanıyor.")
 
     if cfg.use_twic or cfg.pgn_paths:
         matcher = PlayerMatcher(cfg.otb_names, fide_id=cfg.fide_id)

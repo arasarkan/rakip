@@ -257,3 +257,19 @@ def test_collect_config_validation():
         CollectConfig(display_name="x", tempo="hiperbullet", lichess_user="a")
     with pytest.raises(ValueError):
         CollectConfig(display_name="x", use_twic=True)
+
+
+def test_collect_skips_chesscom_when_archives_are_unavailable(tmp_path):
+    pgn = "\n\n".join(make_pgn(seed=i, date=f"2024.02.{i + 1:02d}") for i in range(3))
+    routes = {
+        "https://lichess.org/api/games/user/hedef": FakeResponse(body=pgn),
+        "https://lichess.org/api/user/hedef": FakeResponse(body=json.dumps({"perfs": {}})),
+        # Chess.com arşiv listesi 404 dönüyor (gizli/kapalı arşiv)
+    }
+    fetcher, _, _ = make_fetcher(tmp_path, routes, min_interval=0)
+    messages = []
+    cfg = CollectConfig(display_name="Hedef", tempo="blitz", lichess_user="hedef", chesscom_user="gizli")
+    result = collect(cfg, fetcher, log=messages.append)
+    assert len(result.games) == 3
+    assert result.stats["chesscom"]["archives_unavailable"] == 1
+    assert any("Chess.com" in m and "atlanıyor" in m for m in messages)

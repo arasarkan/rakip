@@ -5,7 +5,7 @@ export const CONFIG = {
 
   // Yalnızca bu Hugging Face kullanıcılarının depoları listelensin. Boş bırakılırsa
   // etiketi taşıyan herkese açık tüm depolar listelenir.
-  hubAuthors: [],
+  hubAuthors: ["imawss"],
 
   // Her zaman listelenecek depolar ("kullanıcı/depo").
   extraRepos: [],
