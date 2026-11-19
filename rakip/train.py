@@ -129,12 +129,19 @@ def predict(
     batch_size: int = 1024,
     temperature: float = 1.0,
     seed: int = 0,
+    temperatures: tuple[float, ...] | None = None,
 ) -> Predictions:
     """Her örnek için modelin ilk tahmini, oynanan hamleye verdiği olasılık ve
-    (botun gerçekte yapacağı gibi) dağılımdan örneklenen bir hamle."""
+    (botun gerçekte yapacağı gibi) dağılımdan örneklenen bir hamle.
+
+    `temperatures` verilirse her sıcaklık için ayrı örnekler de üretilir
+    (`samples_by_t`); sıcaklık kalibre edildikten sonra model yeniden
+    çalıştırılmadan doğru örnek seçilebilsin diye.
+    """
     model.eval()
     data = DeviceSamples(samples, device, self_elo)
     generator = torch.Generator(device="cpu").manual_seed(seed)
+    by_t = {float(t): np.zeros(data.n, dtype=np.int32) for t in (temperatures or ())}
     sample = np.zeros(data.n, dtype=np.int32)
     top1 = np.zeros(data.n, dtype=np.int32)
     p_target = np.zeros(data.n, dtype=np.float32)
@@ -148,11 +155,54 @@ def predict(
         sampling = probs if temperature == 1.0 else torch.softmax(masked / max(temperature, 1e-3), dim=-1)
         drawn = torch.multinomial(sampling.cpu(), 1, generator=generator).squeeze(1)
         sample[start:start + rows.shape[0]] = drawn.numpy()
+        for t, out in by_t.items():
+            dist = probs if t == 1.0 else torch.softmax(masked / max(t, 1e-3), dim=-1)
+            out[start:start + rows.shape[0]] = torch.multinomial(dist.cpu(), 1, generator=generator).squeeze(1).numpy()
         best_p, best = probs.max(dim=-1)
         top1[start:start + rows.shape[0]] = best.cpu().numpy()
         p_top1[start:start + rows.shape[0]] = best_p.cpu().numpy()
         p_target[start:start + rows.shape[0]] = probs.gather(1, target.unsqueeze(1)).squeeze(1).cpu().numpy()
-    return Predictions(top1=top1, p_target=p_target, p_top1=p_top1, sample=sample)
+    return Predictions(top1=top1, p_target=p_target, p_top1=p_top1, sample=sample, samples_by_t=by_t or None)
+
+
+@torch.no_grad()
+def candidates(
+    model: RakipModel,
+    samples: SampleSet,
+    device: torch.device,
+    rows: np.ndarray,
+    self_elo: float,
+    use_player: bool,
+    k: int,
+    temperatures: tuple[float, ...],
+    batch_size: int = 512,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Sıcaklık kalibrasyonu için: seçilen satırlarda modelin en olası `k` hamlesi.
+
+    Dönen: idx (R, k) hamle indeksleri, probs (R, nT, k) her sıcaklıkta bu
+    hamlelerin olasılığı, tail (R, nT) kalan (aday dışı) olasılık. Yasal hamle
+    sayısı k'dan azsa fazladan adayların olasılığı 0'dır.
+    """
+    model.eval()
+    sub = samples.subset(np.asarray(rows))
+    data = DeviceSamples(sub, device, self_elo)
+    r, n_t = data.n, len(temperatures)
+    idx = np.zeros((r, k), dtype=np.int32)
+    probs = np.zeros((r, n_t, k), dtype=np.float32)
+    tail = np.zeros((r, n_t), dtype=np.float32)
+    for start in range(0, r, batch_size):
+        batch = torch.arange(start, min(r, start + batch_size), device=device)
+        tokens, se, oe, legal, _ = data.batch(batch)
+        logits, _ = model(tokens, se, oe, use_player=use_player)
+        masked = masked_logits(logits, legal)
+        top = masked.topk(k, dim=-1).indices
+        idx[start:start + batch.shape[0]] = top.cpu().numpy()
+        for j, t in enumerate(temperatures):
+            p = torch.softmax(masked / max(float(t), 1e-3), dim=-1)
+            chosen = p.gather(1, top)
+            probs[start:start + batch.shape[0], j] = chosen.cpu().numpy()
+            tail[start:start + batch.shape[0], j] = (1.0 - chosen.sum(dim=-1)).clamp_min(0).cpu().numpy()
+    return idx, probs, tail
 
 
 def summarize(pred: Predictions, samples: SampleSet, rows: np.ndarray | None = None) -> dict:

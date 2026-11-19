@@ -11,7 +11,8 @@
  },
  "elo_self": 2080,
  "elo_oppo_default": 2060,
- "temperature": 1.0,
+ "temperature": 0.8,
+ "temperature_calibrated": true,
  "book": {
   "file": "book.json",
   "max_ply": 30,

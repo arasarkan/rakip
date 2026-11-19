@@ -142,6 +142,12 @@ def main():
         excluded={"in_book": int(test_s.in_book.sum()), "forced": int(((test_s.n_legal <= 1) & ~test_s.in_book).sum())},
     )
     scores["sample"] = True
+    scores["temperature"] = {
+        "bot": {"temperature": 0.8, "calibrated": True, "positions": 1500, "target_error_rate": 0.062,
+                "expected_error_rate": 0.064, "expected_error_rate_at_1": 0.098},
+        "generic": {"temperature": 0.75, "calibrated": True, "positions": 1500, "target_error_rate": 0.062,
+                    "expected_error_rate": 0.061, "expected_error_rate_at_1": 0.093},
+    }
     scores["quantization"] = {
         "chosen": "int8", "bytes": 5_600_000,
         "variants": [
@@ -156,7 +162,7 @@ def main():
         "format": 1, "sample": True, "player": PLAYER, "tempo": TEMPO,
         # Ornek rakibin kendi modeli yoktur; site oyun icin genel demo modelini kullanir.
         "model": {"file": "model.onnx", "bytes": 0, "sha256": "ornek", "precision": "fp16"},
-        "elo_self": 2080, "elo_oppo_default": 2060, "temperature": 1.0,
+        "elo_self": 2080, "elo_oppo_default": 2060, "temperature": 0.8, "temperature_calibrated": True,
         "book": {"file": "book.json", "max_ply": book.max_ply, "min_count": book.min_count},
         "games": {"fit": len(split.fit), "test": len(split.test)},
         "main_score": scores["main"]["score"], "score_state": scores["main"]["state"],

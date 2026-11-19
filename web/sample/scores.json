@@ -146,6 +146,24 @@
  "notes": [],
  "expectation": "İnsanlar aynı pozisyonda bile her zaman aynı hamleyi oynamaz. Bu yüzden hiçbir bot bir oyuncuyla %100 aynı oynayamaz; en iyi kişisel modeller bile 10 hamlenin 6-7'sinden fazlasını tutturamaz.",
  "sample": true,
+ "temperature": {
+  "bot": {
+   "temperature": 0.8,
+   "calibrated": true,
+   "positions": 1500,
+   "target_error_rate": 0.062,
+   "expected_error_rate": 0.064,
+   "expected_error_rate_at_1": 0.098
+  },
+  "generic": {
+   "temperature": 0.75,
+   "calibrated": true,
+   "positions": 1500,
+   "target_error_rate": 0.062,
+   "expected_error_rate": 0.061,
+   "expected_error_rate_at_1": 0.093
+  }
+ },
  "quantization": {
   "chosen": "int8",
   "bytes": 5600000,

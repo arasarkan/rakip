@@ -79,13 +79,22 @@ export async function render(root, a, b) {
     const fenInput = h("input", { type: "text", style: "width:100%", placeholder: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" });
     const pgnInput = h("textarea", { placeholder: "1. e4 e5 2. Nf3 Nc6 ..." });
     const extra = h("div");
-    const tempInput = h("input", { type: "range", min: "0.3", max: "1.5", step: "0.1", value: String(opponent.meta?.temperature ?? 1), style: "flex:1" });
+    // Eğitim sırasında botun hata sıklığı rakibinkine göre ayarlandıysa varsayılan o değerdir.
+    const calibratedT = opponent.meta?.temperature_calibrated ? Number(opponent.meta.temperature) : null;
+    const tempInput = h("input", { type: "range", min: "0.3", max: "1.5", step: "0.05", value: String(calibratedT ?? opponent.meta?.temperature ?? 1), style: "flex:1" });
     const tempLabel = h("span", { class: "num small" });
     const eloInput = h("input", { type: "number", min: "400", max: "3400", step: "50", value: String(opponent.meta?.elo_oppo_default ?? CONFIG.demo.elo), style: "width:110px" });
     const error = h("p", { class: "error small" }, message || "");
     const updateTemp = () => {
       const t = Number(tempInput.value);
-      tempLabel.textContent = `${t.toFixed(1)} · ${t < 0.8 ? "daha tutarlı" : t > 1.1 ? "daha değişken" : "rakibin doğal dağılımı"}`;
+      let text;
+      if (calibratedT !== null) {
+        text = Math.abs(t - calibratedT) < 0.026 ? "rakibi kadar sık hata yapar (ayarlı)"
+          : t < calibratedT ? "rakibinden daha az hata yapar, daha tutarlı" : "rakibinden daha sık hata yapar";
+      } else {
+        text = t < 0.8 ? "daha tutarlı" : t > 1.1 ? "daha değişken" : "modelin doğal dağılımı";
+      }
+      tempLabel.textContent = `${t.toFixed(2)} · ${text}`;
     };
     const updateExtra = () => {
       clear(extra);
@@ -115,7 +124,10 @@ export async function render(root, a, b) {
         h("label", null, "Botun hamle çeşitliliği"),
         h("div", { class: "inline" }, tempInput, tempLabel),
         h("p", { class: "small muted", style: "margin-top:4px" },
-          "Bot her zaman en olası hamleyi oynamaz; rakibin gerçek tercih oranlarına göre seçer. Böylece onun tutarsızlıklarını da taşır."),
+          "Bot her zaman en olası hamleyi oynamaz; rakibin gerçek tercih oranlarına göre seçer. Böylece onun tutarsızlıklarını da taşır.",
+          calibratedT !== null
+            ? ` Varsayılan değer (${calibratedT.toFixed(2)}), eğitim sırasında botun ciddi hata sıklığı rakibin gerçek oyunlarındakine eşit olacak şekilde seçildi.`
+            : ""),
       ),
       error,
       h("button", {

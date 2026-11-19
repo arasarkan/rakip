@@ -264,3 +264,26 @@ def test_fit_with_weighted_extra_games(tmp_path):
     zero = build_samples(games, game_weight=lambda g: 0.0 if g.game_id in extra_ids else 1.0)
     result2 = fit(RakipModel(SMALL), zero, val, cfg, torch.device("cpu"), 1800, "z", tmp_path / "z", log=lambda *_: None)
     assert all(np.isfinite(h["val_loss"]) for h in result2.history)
+
+
+def test_candidates_and_multi_temperature_sampling():
+    from rakip.calibrate import TEMPERATURES
+    from rakip.train import candidates
+
+    torch.manual_seed(5)
+    model = RakipModel(SMALL)
+    data = samples(700, 4)
+    rows = np.flatnonzero(data.measured)[:20]
+    idx, probs, tail = candidates(model, data, torch.device("cpu"), rows, 1800, True, 4, TEMPERATURES)
+    assert idx.shape == (20, 4) and probs.shape == (20, len(TEMPERATURES), 4) and tail.shape == (20, len(TEMPERATURES))
+    assert np.allclose(probs.sum(-1) + tail, 1.0, atol=1e-4)
+    legal = data.legal_mask(rows)
+    assert legal[np.arange(20), idx[:, 0]].all()
+    # Düşük sıcaklıkta ilk adayın payı artar.
+    assert (probs[:, 0, 0] >= probs[:, -1, 0] - 1e-6).all()
+
+    pred = predict(model, data, torch.device("cpu"), self_elo=1800, temperatures=TEMPERATURES)
+    assert set(pred.samples_by_t) == {float(t) for t in TEMPERATURES}
+    all_legal = data.legal_mask(slice(None))
+    for drawn in pred.samples_by_t.values():
+        assert all_legal[np.arange(len(data)), drawn].all()

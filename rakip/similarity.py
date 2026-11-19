@@ -80,6 +80,7 @@ class Predictions:
     p_target: np.ndarray   # (N,) rakibin oynadığı hamleye verilen olasılık
     p_top1: np.ndarray     # (N,) ilk tahmine verilen olasılık
     sample: np.ndarray | None = None  # (N,) dağılımdan örneklenen hamle (botun gerçekte oynayacağı)
+    samples_by_t: dict | None = None  # sıcaklık -> (N,) örneklenen hamleler (kalibrasyon için)
 
 
 # --------------------------------------------------------------------------

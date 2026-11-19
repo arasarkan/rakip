@@ -44,6 +44,13 @@ export async function render(root, owner, name) {
         h("li", null, h("strong", null, "Hata: "), "yarısı hata sıklığının benzerliği (oyun aşamasına göre), yarısı rakibin hata yaptığı pozisyonlarda botun da hata yapma oranı. Hata, kazanma şansını en az 10 puan düşüren hamledir."),
       ),
       h("p", null, "Hata profili hesaplanamadıysa ağırlıklar 0,75 (hamle) ve 0,25 (açılış) olur."),
+      h("h3", null, "Hamle çeşitliliği (sıcaklık)"),
+      h("p", null,
+        "Bot en olası hamleyi her zaman oynamaz, olasılıklara göre seçer. Bu seçimin ne kadar dağınık olacağını sıcaklık belirler. ",
+        "Sıcaklık, botun görmediği doğrulama oyunlarında ayarlanır: en olası birkaç aday hamle Stockfish ile değerlendirilir ve ",
+        "botun beklenen ciddi hata sıklığı rakibin gerçek sıklığına en yakın olan değer seçilir. Değerlendirilemeyen düşük olasılıklı ",
+        "hamleler temkinli biçimde hata sayılır. Genel model de aynı yöntemle ayrı ayarlanır, böylece hata profili karşılaştırması adil kalır. ",
+        "Sıcaklık hamle uyumunu (ilk tahmin) değiştirmez."),
       h("p", null, "Aynı formül genel model için de hesaplanır ve yan yana gösterilir. Skorlar hep aşağı yuvarlanır."),
       f ? h("div", null,
         h("h3", null, `${scores.player} için sayılar`),
@@ -62,6 +69,7 @@ export async function render(root, owner, name) {
               h("td", { class: "r" }, `${(100 * scores.references.bot_minus_generic_ci[0]).toFixed(1)} .. ${(100 * scores.references.bot_minus_generic_ci[1]).toFixed(1)} puan`)),
             scores.quantization ? h("tr", null, h("td", null, "Model sürümü"),
               h("td", { class: "r" }, `${scores.quantization.chosen}, ${(scores.quantization.bytes / 1e6).toFixed(1)} MB`)) : null,
+            temperatureRows(scores.temperature),
           ),
         )),
         scores.quantization?.variants ? h("div", null,
@@ -94,4 +102,17 @@ export async function render(root, owner, name) {
       ),
     ),
   );
+}
+
+function temperatureRows(info) {
+  if (!info || !info.bot) return null;
+  const row = (label, value) => h("tr", null, h("td", null, label), h("td", { class: "r" }, value));
+  const t = info.bot;
+  if (!t.calibrated) return row("Hamle çeşitliliği (sıcaklık)", `${Number(t.temperature).toFixed(2)} (ayarlanmadı: ${t.reason || "?"})`);
+  const g = info.generic || {};
+  return [
+    row("Hamle çeşitliliği (sıcaklık)", `bot ${t.temperature.toFixed(2)}, genel model ${g.calibrated ? g.temperature.toFixed(2) : "-"}`),
+    row("Rakibin ciddi hata sıklığı (doğrulama)", pct(t.target_error_rate, 1)),
+    row("Botun beklenen hata sıklığı", `${pct(t.expected_error_rate, 1)} (ayarsız: ${pct(t.expected_error_rate_at_1, 1)})`),
+  ];
 }

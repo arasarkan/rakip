@@ -18,6 +18,7 @@ import numpy as np
 
 from . import __version__, env as envmod
 from .book import build_book, opening_coverage
+from .calibrate import TEMPERATURES, calibrate
 from .config import BASE_MODEL_REPO, MIN_PLIES
 from .data import CollectConfig, collect
 from .engine import choose_rows, engine_pass, ensure_stockfish, stockfish_evaluator
@@ -50,6 +51,11 @@ class RunConfig:
     # Ek tempolardaki oyunların eğitimdeki toplam ağırlığı, hedef tempoya göre en çok
     # bu oran kadar olur (0.5: ek veri toplamda hedef tempo verisinin yarısı kadar etki eder).
     extra_weight: float = 0.5
+    # Hamle çeşitliliği (sıcaklık): doğrulama setinde botun hata oranı oyuncununkine
+    # yaklaşacak şekilde otomatik seçilir. Kapalıysa `temperature` kullanılır.
+    calibrate_temperature: bool = True
+    calib_positions: int = 1500
+    calib_topk: int = 6
 
 
 def _write_json(path: Path, data) -> None:
@@ -82,7 +88,9 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
 
     from .export import export_and_choose, onnx_predict
     from .hub import HubStore, model_card
-    from .train import TrainConfig, calibrate_elo, fit, load_base_from_hub, pick_device, predict, run_signature, summarize
+    from .train import (
+        TrainConfig, calibrate_elo, candidates, fit, load_base_from_hub, pick_device, predict, run_signature, summarize,
+    )
 
     session_start = session_start or time.time()
     env = envmod.detect()
@@ -155,7 +163,12 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
     model = load_base_from_hub(hf_token, device)
     nominal = nominal_elo(split.fit, cfg.fallback_elo)
     self_elo, elo_table = calibrate_elo(model, val_s, device, nominal, log=log)
-    generic = predict(model, test_s, device, self_elo=self_elo, use_player=False, temperature=cfg.temperature, seed=1)
+    temps = TEMPERATURES if cfg.calibrate_temperature else None
+    generic = predict(model, test_s, device, self_elo=self_elo, use_player=False, temperature=cfg.temperature, seed=1,
+                      temperatures=temps)
+    calib_rows = choose_rows(val_s.measured, cfg.calib_positions, seed=5)
+    gen_cand = candidates(model, val_s, device, calib_rows, self_elo, False, cfg.calib_topk, TEMPERATURES) \
+        if cfg.calibrate_temperature else None
     log(f"[taban] genel model (reyting {self_elo}): test isabeti %{100 * summarize(generic, test_s)['top1']:.1f}")
 
     # 5) İnce ayar -------------------------------------------------------------
@@ -163,20 +176,36 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
     signature = run_signature(split_info, train_cfg, self_elo)
     fit_result = fit(model, fit_s, val_s, train_cfg, device, self_elo, signature, paths.work,
                      store=store, session_start=session_start, log=log)
-    bot = predict(model, test_s, device, self_elo=self_elo, use_player=True, temperature=cfg.temperature, seed=2)
+    bot = predict(model, test_s, device, self_elo=self_elo, use_player=True, temperature=cfg.temperature, seed=2,
+                  temperatures=temps)
+    bot_cand = candidates(model, val_s, device, calib_rows, self_elo, True, cfg.calib_topk, TEMPERATURES) \
+        if cfg.calibrate_temperature else None
     log(f"[bot] ince ayarlı model: test isabeti %{100 * summarize(bot, test_s)['top1']:.1f}")
 
     # 6) Stockfish: referans, hata profili ve rapor ----------------------------
     sf_best, err_bot, err_generic, details = None, None, None, []
+    temp_info = {"bot": {"temperature": cfg.temperature, "calibrated": False, "reason": "kapalı"},
+                 "generic": {"temperature": cfg.temperature, "calibrated": False, "reason": "kapalı"}}
     engine_path = ensure_stockfish(log)
     if engine_path is None:
-        log("[stockfish] bulunamadı; Stockfish karşılaştırması ve hata profili atlanıyor.")
+        log("[stockfish] bulunamadı; Stockfish karşılaştırması, hata profili ve sıcaklık ayarı atlanıyor.")
+        temp_info["bot"]["reason"] = temp_info["generic"]["reason"] = "Stockfish yok"
     else:
         remaining = train_cfg.time_budget_hours * 3600 - (time.time() - session_start)
         budget = max(300.0, min(remaining - 900.0, 2 * 3600.0))
+
+        if cfg.calibrate_temperature and len(calib_rows):
+            temp_info = calibrate_temperatures(
+                split.val, val_s, calib_rows, bot_cand, gen_cand, engine_path, cfg.engine_nodes, budget * 0.2, log,
+            )
+            for name, pred in (("bot", bot), ("generic", generic)):
+                chosen = temp_info[name]["temperature"]
+                if pred.samples_by_t and chosen in pred.samples_by_t:
+                    pred.sample = pred.samples_by_t[chosen]
+
         test_rows = choose_rows(test_s.measured, cfg.max_engine_positions)
         log(f"[stockfish] test: {len(test_rows)} pozisyon değerlendiriliyor...")
-        evaluator = stockfish_evaluator(engine_path, nodes=cfg.engine_nodes, time_budget_seconds=budget * 0.6, log=log)
+        evaluator = stockfish_evaluator(engine_path, nodes=cfg.engine_nodes, time_budget_seconds=budget * 0.5, log=log)
         test_pass = engine_pass(split.test, test_s, test_rows, evaluator, {"bot": bot.sample, "generic": generic.sample})
         sf_best = test_pass.sf_best
         err_bot = error_profile(test_pass.loss_player[test_rows], test_pass.loss["bot"][test_rows], test_pass.phases[test_rows])
@@ -185,7 +214,7 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
 
         report_rows = choose_rows(train_s.measured, cfg.max_report_positions, seed=3)
         log(f"[stockfish] rapor: {len(report_rows)} pozisyon değerlendiriliyor...")
-        evaluator = stockfish_evaluator(engine_path, nodes=cfg.engine_nodes, time_budget_seconds=budget * 0.4, log=log)
+        evaluator = stockfish_evaluator(engine_path, nodes=cfg.engine_nodes, time_budget_seconds=budget * 0.3, log=log)
         details.extend(engine_pass(split.train, train_s, report_rows, evaluator).details)
 
     # 7) ONNX ve quantize ------------------------------------------------------
@@ -205,6 +234,7 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
         n_test_games=len(split.test), excluded=excluded,
     )
     scores["quantization"] = quant
+    scores["temperature"] = temp_info
     scores["generic_elo"] = {"chosen": self_elo, "nominal": nominal, "table": elo_table}
     scores["training"] = {
         "regime": fit_result.regime, "best_epoch": fit_result.best_epoch, "stopped_early": fit_result.stopped_early,
@@ -231,7 +261,8 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
         "inputs": {"history": [64, 96], "elo_self": "scalar", "elo_oppo": "scalar"},
         "elo_self": self_elo,
         "elo_oppo_default": int(statistics.median(opp)) if opp else self_elo,
-        "temperature": cfg.temperature,
+        "temperature": temp_info["bot"]["temperature"],
+        "temperature_calibrated": bool(temp_info["bot"].get("calibrated")),
         "book": {"file": "book.json", "max_ply": book.max_ply, "min_count": book.min_count},
         "games": {"fit": len(split.fit), "test": len(split.test), "extra": len(extra_fit), "min_plies": MIN_PLIES},
         "main_score": scores["main"]["score"],
@@ -262,3 +293,46 @@ def run(cfg: RunConfig, session_start: float | None = None, log=print) -> dict:
             log(f"[hub] YÜKLENEMEDİ. Çıktılar şurada duruyor: {paths.out}")
     log(f"[bitti] toplam süre: {(time.time() - session_start) / 60:.0f} dk")
     return {"repo_id": store.repo_id if store else None, "out_dir": str(paths.out), "scores": scores, "meta": meta}
+
+
+def calibrate_temperatures(games, samples, rows, bot_cand, gen_cand, engine_path, nodes, seconds, log=print) -> dict:
+    """Doğrulama pozisyonlarında bot ve genel model için sıcaklığı ayrı ayrı seçer.
+
+    Her iki modelin en olası adayları tek bir Stockfish geçişinde değerlendirilir;
+    hedef, oyuncunun aynı pozisyonlardaki gerçek ciddi hata oranıdır. Ayrıntı:
+    rakip/calibrate.py.
+    """
+    from .similarity import ERROR_THRESHOLD
+
+    rows = np.asarray(rows)
+    n = len(samples)
+    move_sets = {}
+    for prefix, (idx, _, _) in (("b", bot_cand), ("g", gen_cand)):
+        for j in range(idx.shape[1]):
+            arr = samples.target.astype(np.int32).copy()
+            arr[rows] = idx[:, j]
+            move_sets[f"{prefix}{j}"] = arr
+    log(f"[sıcaklık] {len(rows)} doğrulama pozisyonunda adaylar Stockfish ile değerlendiriliyor...")
+    evaluator = stockfish_evaluator(engine_path, nodes=nodes, time_budget_seconds=seconds, log=log)
+    result = engine_pass(games, samples, rows, evaluator, move_sets)
+    ok = result.sf_best[rows] >= 0
+    player_loss = result.loss_player[rows]
+    target = float(np.nanmean(player_loss[ok] >= ERROR_THRESHOLD)) if ok.any() else float("nan")
+
+    def err_matrix(prefix, k):
+        cols = []
+        for j in range(k):
+            loss = result.loss[f"{prefix}{j}"][rows]
+            cols.append(np.where(np.isnan(loss), np.nan, (loss >= ERROR_THRESHOLD).astype(np.float64)))
+        return np.stack(cols, axis=1)[ok]
+
+    info = {}
+    for name, prefix, (idx, probs, tail) in (("bot", "b", bot_cand), ("generic", "g", gen_cand)):
+        info[name] = calibrate(TEMPERATURES, probs[ok], tail[ok], err_matrix(prefix, idx.shape[1]), target)
+        t = info[name]
+        if t.get("calibrated"):
+            log(f"[sıcaklık] {name}: {t['temperature']} seçildi (oyuncunun hata oranı %{100 * target:.1f}, "
+                f"beklenen %{100 * t['expected_error_rate']:.1f}; sıcaklık 1'de %{100 * (t['expected_error_rate_at_1'] or 0):.1f})")
+        else:
+            log(f"[sıcaklık] {name}: ayarlanamadı ({t.get('reason')}); {t['temperature']} kullanılıyor.")
+    return info

@@ -219,6 +219,13 @@ Ana skor = 100 x ( 0,6 x min(1, m / T)  +  0,2 x Açılış  +  0,2 x Hata )
 
 Hata profili hesaplanamazsa ağırlıklar 0,75 / 0,25 olur.
 
+**Hamle çeşitliliği (sıcaklık).** Bot hamlesini olasılıklara göre seçer; sıcaklık bu seçimin ne kadar dağınık
+olacağını belirler. Sıcaklık 1'de bot oyuncudan çok daha sık hata yapıyordu (Eric Rosen: oyuncu %6, bot %10).
+Artık doğrulama setinde (test setine dokunmadan) modelin en olası 6 adayı Stockfish ile değerlendirilir ve botun
+beklenen ciddi hata sıklığı oyuncununkine en yakın olan sıcaklık seçilir (`rakip/calibrate.py`). Değerlendirilemeyen
+düşük olasılıklı hamleler temkinli biçimde hata sayılır. Genel model de aynı yöntemle ayrı ayarlanır. Seçilen değer
+sitede botun varsayılan ayarıdır ve hata profili bu sıcaklıkla ölçülür; hamle uyumu (ilk tahmin) etkilenmez.
+
 **Dürüstlük kuralları**
 
 - Aynı formül genel model için de hesaplanır ve yan yana gösterilir.
